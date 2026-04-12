@@ -1,0 +1,31 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import AppLayout from '@/layouts/AppLayout'
+import LoginPage from '@/pages/LoginPage'
+import DashboardPage from '@/pages/DashboardPage'
+import ChargePointsPage from '@/pages/ChargePointsPage'
+import ChargePointDetailPage from '@/pages/ChargePointDetailPage'
+import TransactionsPage from '@/pages/TransactionsPage'
+import AnalyticsPage from '@/pages/AnalyticsPage'
+import MessagesPage from '@/pages/MessagesPage'
+import AiInsightsPage from '@/pages/AiInsightsPage'
+import SettingsPage from '@/pages/SettingsPage'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<AppLayout />}>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="charge-points" element={<ChargePointsPage />} />
+        <Route path="charge-points/:chargePointId" element={<ChargePointDetailPage />} />
+        <Route path="transactions" element={<TransactionsPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="messages" element={<MessagesPage />} />
+        <Route path="ai-insights" element={<AiInsightsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  )
+}
