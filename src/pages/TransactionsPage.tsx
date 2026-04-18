@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { ArrowLeftRight, Clock, Zap, User } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
@@ -8,55 +8,89 @@ import EmptyState from '@/components/EmptyState'
 import ErrorState from '@/components/ErrorState'
 import { TableSkeleton, StatCardSkeleton } from '@/components/LoadingSkeleton'
 import StatCard from '@/components/StatCard'
-import { useTransactions, useTransactionOverview } from '@/hooks/useTransactions'
+import { useInfiniteTransactions, useTransactionOverview } from '@/hooks/useTransactions'
 import { formatDateTime, formatDuration, formatEnergy } from '@/utils/formatters'
 import type { Transaction } from '@/types'
+import { useLang } from '@/contexts/LangContext'
 
 const STATUS_OPTIONS = ['All', 'active', 'completed', 'stopped', 'error']
 const PAGE_SIZE = 15
 
 export default function TransactionsPage() {
+  const { t } = useLang()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
-  const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Transaction | null>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const lastElementRef = useRef<HTMLTableRowElement | null>(null)
 
-  const { data, isLoading, isError, refetch } = useTransactions()
+  const { 
+    data, 
+    isLoading, 
+    isError, 
+    refetch, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useInfiniteTransactions({ status: statusFilter !== 'All' ? statusFilter : undefined })
+  
   const { data: overview, isLoading: overviewLoading } = useTransactionOverview()
-  const getArray = (val: any) => Array.isArray(val) ? val : (Array.isArray(val?.data) ? val.data : [])
-  const rawList: Transaction[] = getArray(data).map((tx: any) => ({
-    ...tx,
-    // Calcule energyConsumed si non renvoyé par le backend (meterStop - meterStart)
-    energyConsumed: tx.energyConsumed
-      ?? tx.energy_consumed
-      ?? (tx.meterStop != null && tx.meterStart != null ? tx.meterStop - tx.meterStart : undefined),
-    stopTime: tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time,
-    startTime: tx.startTime ?? tx.start_time,
-    chargePointId: tx.chargePointId ?? tx.charge_point_id ?? tx.chargepoint_id,
-    idTag: tx.idTag ?? tx.id_tag,
-    connectorId: tx.connectorId ?? tx.connector_id,
-    meterStart: tx.meterStart ?? tx.meter_start,
-    meterStop: tx.meterStop ?? tx.meter_stop,
-    stopReason: tx.stopReason ?? tx.stop_reason,
-  }))
+  const rawList: Transaction[] = useMemo(() => {
+    const pages = data?.pages || []
+    const flatList = pages.flatMap((p: any) => p.data || [])
+    
+    return flatList.map((tx: any) => ({
+      ...tx,
+      energyConsumed: tx.energyConsumed ?? tx.energy_consumed ?? (tx.meterStop != null && tx.meterStart != null ? tx.meterStop - tx.meterStart : undefined),
+      stopTime: tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time,
+      startTime: tx.startTime ?? tx.start_time,
+      chargePointId: tx.chargePointId ?? tx.charge_point_id ?? tx.chargepoint_id,
+      idTag: tx.idTag ?? tx.id_tag,
+      connectorId: tx.connectorId ?? tx.connector_id,
+      meterStart: tx.meterStart ?? tx.meter_start,
+      meterStop: tx.meterStop ?? tx.meter_stop,
+      stopReason: tx.stopReason ?? tx.stop_reason,
+      status: String(tx.status || (tx.stopTime ? 'completed' : 'active')).toLowerCase()
+    }))
+  }, [data?.pages])
 
   const filtered = useMemo(() => {
     return rawList.filter((tx) => {
-      const s = tx.status ?? (tx.stopTime ? 'completed' : 'active')
       const matchSearch = !search ||
         String(tx.id).includes(search) ||
         tx.chargePointId?.toLowerCase().includes(search.toLowerCase()) ||
         tx.idTag?.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === 'All' || s === statusFilter
+      
+      const txStatus = tx.status
+      const currentFilter = statusFilter.toLowerCase()
+      const matchStatus = currentFilter === 'all' || txStatus === currentFilter
+
       return matchSearch && matchStatus
     })
   }, [rawList, search, statusFilter])
 
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  // Infinite Scroll Observer
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect()
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage()
+      }
+    })
+
+    if (lastElementRef.current) {
+      observerRef.current.observe(lastElementRef.current)
+    }
+
+    return () => observerRef.current?.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  const paginated = filtered
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader title="Transactions" subtitle="Charging session history and activity" />
+      <PageHeader title={t.transactions.title} subtitle={t.transactions.subtitle} />
 
       {/* Overview stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -64,27 +98,26 @@ export default function TransactionsPage() {
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <StatCard title="Total Sessions" value={overview?.total ?? rawList.length} icon={<ArrowLeftRight size={18} />} variant="blue" />
-            <StatCard title="Active" value={overview?.active ?? rawList.filter(t => !t.stopTime).length} icon={<Zap size={18} />} variant="emerald" />
-            <StatCard title="Completed" value={overview?.completed ?? rawList.filter(t => !!t.stopTime).length} icon={<Clock size={18} />} variant="default" />
-            <StatCard title="Total Energy" value={formatEnergy(overview?.totalEnergy)} icon={<Zap size={18} />} variant="amber" />
+            <StatCard title={t.transactions.totalSessions} value={overview?.total ?? rawList.length} icon={<ArrowLeftRight size={18} />} variant="blue" />
+            <StatCard title={t.transactions.active} value={overview?.active ?? rawList.filter(tx => !tx.stopTime).length} icon={<Zap size={18} />} variant="emerald" />
+            <StatCard title={t.transactions.completed} value={overview?.completed ?? rawList.filter(tx => !!tx.stopTime).length} icon={<Clock size={18} />} variant="default" />
+            <StatCard title={t.transactions.totalEnergy} value={formatEnergy(overview?.totalEnergy)} icon={<Zap size={18} />} variant="amber" />
           </>
         )}
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search by ID, charger, tag…" className="flex-1 max-w-sm" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder={t.transactions.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
           {STATUS_OPTIONS.map((s) => (
             <button
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1) }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                statusFilter === s ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${statusFilter === s ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
             >
-              {s}
+              {s === 'All' ? t.common.all : (t.status[s as keyof typeof t.status] ?? s)}
             </button>
           ))}
         </div>
@@ -96,7 +129,7 @@ export default function TransactionsPage() {
         <TableSkeleton rows={10} />
       ) : filtered.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<ArrowLeftRight size={22} />} title="No transactions found" description="Try adjusting your filters." />
+          <EmptyState icon={<ArrowLeftRight size={22} />} title={t.transactions.noTransactions} description={t.transactions.noTransactionsDesc} />
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -104,7 +137,7 @@ export default function TransactionsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['ID', 'Charge Point', 'Connector', 'ID Tag', 'Start', 'Stop', 'Duration', 'Energy', 'Status'].map((h) => (
+                  {[t.transactions.id, t.transactions.chargePoint, t.transactions.connector, t.transactions.idTag, t.transactions.start, t.transactions.stop, t.transactions.duration, t.transactions.energy, t.transactions.status].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                   <th className="px-4 py-3" />
@@ -113,12 +146,13 @@ export default function TransactionsPage() {
               <tbody className="divide-y divide-slate-50">
                 {paginated.map((tx, idx) => {
                   const status = tx.status ?? (tx.stopTime ? 'completed' : 'active')
-                  return (
-                    <tr
-                      key={tx.id ? `tx-${tx.id}` : `tx-fallback-${idx}`}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
-                      onClick={() => setSelected(tx)}
-                    >
+                    return (
+                      <tr
+                        key={tx.id ? `tx-${tx.id}` : `tx-fallback-${idx}`}
+                        ref={idx === paginated.length - 1 ? lastElementRef : null}
+                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                        onClick={() => setSelected(tx)}
+                      >
                       <td className="px-4 py-3">
                         <span className="text-xs font-mono text-blue-600 font-medium">#{tx.id}</span>
                       </td>
@@ -145,7 +179,7 @@ export default function TransactionsPage() {
                           onClick={(e) => { e.stopPropagation(); setSelected(tx) }}
                           className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
                         >
-                          View
+                          {t.common.view}
                         </button>
                       </td>
                     </tr>
@@ -157,17 +191,27 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {!isLoading && (
-        <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
+      {/* Loading indicator for next page */}
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-4">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Visible count indicator */}
+      {!isLoading && filtered.length > 0 && (
+        <p className="text-center text-xs text-slate-400 py-4">
+          {t.common.showingResults(1, filtered.length, data?.pages[0]?.meta?.total || filtered.length)}
+        </p>
       )}
 
       {/* Detail Drawer */}
-      {selected && <TransactionDrawer tx={selected} onClose={() => setSelected(null)} />}
+      {selected && <TransactionDrawer tx={selected} onClose={() => setSelected(null)} t={t} />}
     </div>
   )
 }
 
-function TransactionDrawer({ tx, onClose }: { tx: Transaction; onClose: () => void }) {
+function TransactionDrawer({ tx, onClose, t }: { tx: Transaction; onClose: () => void; t: any }) {
   const status = tx.status ?? (tx.stopTime ? 'completed' : 'active')
   return (
     <>
@@ -178,27 +222,27 @@ function TransactionDrawer({ tx, onClose }: { tx: Transaction; onClose: () => vo
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div>
-            <p className="font-bold text-slate-900">Transaction #{tx.id}</p>
+            <p className="font-bold text-slate-900">{t.transactions.transactionTitle(tx.id)}</p>
             <StatusBadge status={status} />
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">✕</button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          <DrawerSection title="General">
-            <DrawerRow label="Charge Point" value={tx.chargePointId} />
-            <DrawerRow label="Connector ID" value={tx.connectorId} />
-            <DrawerRow label="ID Tag" value={tx.idTag} mono />
+          <DrawerSection title={t.transactions.general}>
+            <DrawerRow label={t.transactions.chargePointLabel} value={tx.chargePointId} />
+            <DrawerRow label={t.transactions.connectorId} value={tx.connectorId} />
+            <DrawerRow label={t.transactions.idTag} value={tx.idTag} mono />
           </DrawerSection>
-          <DrawerSection title="Timing">
-            <DrawerRow label="Start Time" value={formatDateTime(tx.startTime)} />
-            <DrawerRow label="Stop Time" value={formatDateTime(tx.stopTime)} />
-            <DrawerRow label="Duration" value={formatDuration(tx.startTime, tx.stopTime ?? null)} />
-            <DrawerRow label="Stop Reason" value={tx.stopReason} />
+          <DrawerSection title={t.transactions.timing}>
+            <DrawerRow label={t.transactions.startTime} value={formatDateTime(tx.startTime)} />
+            <DrawerRow label={t.transactions.stopTime} value={formatDateTime(tx.stopTime)} />
+            <DrawerRow label={t.transactions.duration} value={formatDuration(tx.startTime, tx.stopTime ?? null)} />
+            <DrawerRow label={t.transactions.stopReason} value={tx.stopReason} />
           </DrawerSection>
-          <DrawerSection title="Energy">
-            <DrawerRow label="Meter Start" value={tx.meterStart != null ? `${tx.meterStart} Wh` : undefined} />
-            <DrawerRow label="Meter Stop" value={tx.meterStop != null ? `${tx.meterStop} Wh` : undefined} />
-            <DrawerRow label="Energy Consumed" value={formatEnergy(tx.energyConsumed)} highlight />
+          <DrawerSection title={t.transactions.energySection}>
+            <DrawerRow label={t.transactions.meterStart} value={tx.meterStart != null ? `${tx.meterStart} Wh` : undefined} />
+            <DrawerRow label={t.transactions.meterStop} value={tx.meterStop != null ? `${tx.meterStop} Wh` : undefined} />
+            <DrawerRow label={t.transactions.energyConsumed} value={formatEnergy(tx.energyConsumed)} highlight />
           </DrawerSection>
         </div>
       </div>

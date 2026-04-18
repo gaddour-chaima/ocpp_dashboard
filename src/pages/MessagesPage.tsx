@@ -11,11 +11,13 @@ import { TableSkeleton } from '@/components/LoadingSkeleton'
 import { useMessages } from '@/hooks/useMessages'
 import { formatDateTime } from '@/utils/formatters'
 import type { OcppMessage } from '@/types'
+import { useLang } from '@/contexts/LangContext'
 
 const DIRECTION_OPTIONS = ['All', 'in', 'out', 'IN', 'OUT']
 const PAGE_SIZE = 20
 
 export default function MessagesPage() {
+  const { t } = useLang()
   const [search, setSearch] = useState('')
   const [dirFilter, setDirFilter] = useState('All')
   const [actionFilter, setActionFilter] = useState('')
@@ -57,8 +59,8 @@ export default function MessagesPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader
-        title="OCPP Messages"
-        subtitle={`${filtered.length} messages matching filters`}
+        title={t.messages.title}
+        subtitle={t.messages.subtitle(filtered.length)}
       />
 
       {/* Filters */}
@@ -67,7 +69,7 @@ export default function MessagesPage() {
           <SearchInput
             value={search}
             onChange={(v) => { setSearch(v); setPage(1) }}
-            placeholder="Search by charge point ID or action…"
+            placeholder={t.messages.searchPlaceholder}
             className="flex-1"
           />
           <div className="flex items-center gap-2">
@@ -83,7 +85,7 @@ export default function MessagesPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-slate-400 font-medium">Direction:</span>
+          <span className="text-xs text-slate-400 font-medium">{t.messages.direction}</span>
           {['All', 'IN', 'OUT'].map((d) => (
             <button
               key={d}
@@ -94,9 +96,9 @@ export default function MessagesPage() {
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {d === 'All' ? 'All' : (
+              {d === 'All' ? t.messages.dirAll : (
                 <span className={d === 'IN' ? 'text-emerald-600' : 'text-amber-600'}>
-                  {d === 'IN' ? '↓ IN' : '↑ OUT'}
+                  {d === 'IN' ? t.messages.dirIn : t.messages.dirOut}
                 </span>
               )}
             </button>
@@ -110,7 +112,7 @@ export default function MessagesPage() {
         <TableSkeleton rows={10} />
       ) : filtered.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<MessageSquare size={22} />} title="No messages found" description="Adjust filters or wait for incoming OCPP traffic." />
+          <EmptyState icon={<MessageSquare size={22} />} title={t.messages.noMessages} description={t.messages.noMessagesDesc} />
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -119,11 +121,11 @@ export default function MessagesPage() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   <th className="w-8 px-2 py-3" />
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Timestamp</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Charge Point</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Action</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Direction</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.timestamp}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.chargePoint}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.action}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.directionCol}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">{t.messages.type}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -154,11 +156,11 @@ export default function MessagesPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`badge text-xs ${dir === 'IN' ? 'badge-in' : dir === 'OUT' ? 'badge-out' : 'badge-offline'}`}>
-                            {dir === 'IN' ? '↓ IN' : dir === 'OUT' ? '↑ OUT' : dir ?? '—'}
+                            {dir === 'IN' ? t.messages.dirIn : dir === 'OUT' ? t.messages.dirOut : dir ?? '—'}
                           </span>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell text-xs text-slate-400">
-                          {msg.messageType != null ? `Type ${msg.messageType}` : '—'}
+                          {msg.messageType != null ? t.messages.messageType(msg.messageType) : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <button

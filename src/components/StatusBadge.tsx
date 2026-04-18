@@ -1,4 +1,5 @@
 import { getStatusColor } from '@/utils/status'
+import { useLang } from '@/contexts/LangContext'
 
 interface StatusBadgeProps {
   status: string
@@ -24,9 +25,11 @@ const STATUS_DOTS: Record<string, string> = {
 }
 
 export default function StatusBadge({ status, dot = true, size = 'md' }: StatusBadgeProps) {
+  const { t } = useLang()
   const dotColor = STATUS_DOTS[status] ?? '#94a3b8'
   const badgeClass = getStatusColor(status)
   const sizeClass = size === 'sm' ? 'text-[11px] py-0.5 px-2' : ''
+  const displayStatus = t.status[status as keyof typeof t.status] ?? status
 
   return (
     <span className={`badge ${badgeClass} ${sizeClass}`}>
@@ -36,7 +39,7 @@ export default function StatusBadge({ status, dot = true, size = 'md' }: StatusB
           style={{ backgroundColor: dotColor }}
         />
       )}
-      {status}
+      {displayStatus}
     </span>
   )
 }

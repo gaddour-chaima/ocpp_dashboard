@@ -6,9 +6,11 @@ import PageHeader from '@/components/PageHeader'
 import ChartCard from '@/components/ChartCard'
 import { ChartSkeleton } from '@/components/LoadingSkeleton'
 import { useAiForecast, useAiAnomaly } from '@/hooks/useAi'
+import { useLang } from '@/contexts/LangContext'
 import { formatEnergy, formatDateTime } from '@/utils/formatters'
 
 export default function AiInsightsPage() {
+  const { t } = useLang()
   const { data: forecast, isLoading: fLoading, isError: fError } = useAiForecast()
   const { data: anomaly, isLoading: aLoading, isError: aError } = useAiAnomaly()
 
@@ -20,14 +22,14 @@ export default function AiInsightsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="AI Insights"
-        subtitle="Machine learning forecasting and anomaly detection"
+        title={t.aiInsights.title}
+        subtitle={t.aiInsights.subtitle}
         actions={
           <span
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
             style={{ background: 'linear-gradient(135deg, #ede9fe, #dbeafe)', color: '#4f46e5', border: '1px solid #c7d2fe' }}
           >
-            <Sparkles size={12} /> AI-Powered
+            <Sparkles size={12} /> {t.aiInsights.aiPowered}
           </span>
         }
       />
@@ -47,15 +49,15 @@ export default function AiInsightsPage() {
             <BrainCircuit size={26} color="white" />
           </div>
           <div>
-            <h3 className="text-white font-bold text-lg leading-tight">Intelligent EV Infrastructure Analytics</h3>
+            <h3 className="text-white font-bold text-lg leading-tight">{t.aiInsights.heroTitle}</h3>
             <p className="text-slate-400 text-sm mt-1 max-w-lg">
-              Advanced ML models analyze your charging data to predict demand, detect anomalies, and optimize energy distribution across your EV network.
+              {t.aiInsights.heroDesc}
             </p>
           </div>
           <div className="sm:ml-auto flex-shrink-0">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-slate-300 border border-white/15">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-              Module active
+              {t.aiInsights.moduleActive}
             </span>
           </div>
         </div>
@@ -66,16 +68,16 @@ export default function AiInsightsPage() {
         {/* Energy Forecast */}
         <div className="space-y-4">
           <ChartCard
-            title="Energy Demand Forecast"
-            subtitle="Predicted consumption for upcoming period"
+            title={t.aiInsights.energyForecast}
+            subtitle={t.aiInsights.energyForecastSub}
             action={
-              <span className="text-xs font-medium text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">ML Forecast</span>
+              <span className="text-xs font-medium text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full">{t.aiInsights.mlForecast}</span>
             }
           >
             {fLoading ? <ChartSkeleton height={200} /> : fError ? (
-              <AiPlaceholderChart color="#8b5cf6" label="Energy Forecast" />
+              <AiPlaceholderChart color="#8b5cf6" label={t.aiInsights.energyForecast} t={t} />
             ) : forecastData.length === 0 ? (
-              <AiPlaceholderChart color="#8b5cf6" label="Energy Forecast" />
+              <AiPlaceholderChart color="#8b5cf6" label={t.aiInsights.energyForecast} t={t} />
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={forecastData} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
@@ -103,16 +105,16 @@ export default function AiInsightsPage() {
                 <TrendingUp size={16} className="text-violet-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">Forecast Summary</p>
-                <p className="text-xs text-slate-400">Next period prediction</p>
+                <p className="text-sm font-semibold text-slate-800">{t.aiInsights.forecastSummary}</p>
+                <p className="text-xs text-slate-400">{t.aiInsights.forecastSummarySub}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Predicted Energy', value: forecast?.predictedEnergy ? formatEnergy(forecast.predictedEnergy) : '~124 kWh', icon: <Zap size={14} className="text-violet-500" /> },
-                { label: 'Confidence', value: `${forecast?.confidence ?? 87}%`, icon: <CheckCircle size={14} className="text-emerald-500" /> },
-                { label: 'Period', value: forecast?.period ?? '7 days', icon: <Clock size={14} className="text-blue-500" /> },
-                { label: 'Model', value: 'LSTM v2.1', icon: <BrainCircuit size={14} className="text-slate-400" /> },
+                { label: t.aiInsights.predictedEnergy, value: forecast?.predictedEnergy ? formatEnergy(forecast.predictedEnergy) : '~124 kWh', icon: <Zap size={14} className="text-violet-500" /> },
+                { label: t.aiInsights.confidence, value: `${forecast?.confidence ?? 87}%`, icon: <CheckCircle size={14} className="text-emerald-500" /> },
+                { label: t.aiInsights.period, value: forecast?.period ?? '7 days', icon: <Clock size={14} className="text-blue-500" /> },
+                { label: t.aiInsights.model, value: 'LSTM v2.1', icon: <BrainCircuit size={14} className="text-slate-400" /> },
               ].map((item, i) => (
                 <div key={i} className="bg-slate-50 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 mb-1">{item.icon}<span className="text-xs text-slate-500">{item.label}</span></div>
@@ -122,7 +124,7 @@ export default function AiInsightsPage() {
             </div>
             {(fError || !forecast) && (
               <p className="text-xs text-slate-400 mt-3 italic text-center">
-                ✦ Advanced ML module — connect backend AI service to activate live forecasts
+                {t.aiInsights.connectBackend}
               </p>
             )}
           </div>
@@ -137,12 +139,12 @@ export default function AiInsightsPage() {
                 <AlertTriangle size={18} className="text-rose-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">Anomaly Detection</p>
-                <p className="text-xs text-slate-400">Real-time fault pattern recognition</p>
+                <p className="text-sm font-semibold text-slate-800">{t.aiInsights.anomalyDetection}</p>
+                <p className="text-xs text-slate-400">{t.aiInsights.anomalySub}</p>
               </div>
               <div className="ml-auto">
                 <span className="text-xs font-medium text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">
-                  {anomaly?.totalDetected ?? (aError ? 2 : 0)} detected
+                  {anomaly?.totalDetected ?? (aError ? 2 : 0)} {t.aiInsights.detected}
                 </span>
               </div>
             </div>
@@ -160,7 +162,7 @@ export default function AiInsightsPage() {
             ) : (
               <div className="space-y-3">
                 {/* Mock anomalies for demo */}
-                {MOCK_ANOMALIES.map((a, i) => <AnomalyCard key={i} anomaly={a} mock />)}
+                {MOCK_ANOMALIES.map((a, i) => <AnomalyCard key={i} anomaly={a} mock t={t} />)}
               </div>
             )}
           </div>
@@ -195,14 +197,14 @@ export default function AiInsightsPage() {
       >
         <Sparkles size={16} className="text-violet-500 mt-0.5 flex-shrink-0" />
         <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">Integration Ready:</span> These AI modules are designed to connect with your backend ML pipeline. Replace the placeholder endpoints at <code className="text-xs bg-slate-100 px-1 py-0.5 rounded">/api/ai/forecast-energy</code> and <code className="text-xs bg-slate-100 px-1 py-0.5 rounded">/api/ai/anomaly-detection</code> with your trained models.
+          <span className="font-semibold text-slate-800">{t.aiInsights.integrationReady}</span> {t.aiInsights.integrationDesc} <code className="text-xs bg-slate-100 px-1 py-0.5 rounded">/api/ai/forecast-energy</code> {t.aiInsights.integrationDesc2} <code className="text-xs bg-slate-100 px-1 py-0.5 rounded">/api/ai/anomaly-detection</code> {t.aiInsights.integrationDesc3}
         </p>
       </div>
     </div>
   )
 }
 
-function AiPlaceholderChart({ color, label }: { color: string; label: string }) {
+function AiPlaceholderChart({ color, label, t }: { color: string; label: string; t: any }) {
   const data = Array.from({ length: 14 }, (_, i) => ({
     date: `D+${i + 1}`,
     energy: 80000 + Math.sin(i * 0.8) * 30000 + Math.random() * 20000,
@@ -225,14 +227,14 @@ function AiPlaceholderChart({ color, label }: { color: string; label: string }) 
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-xs text-slate-400 bg-white/80 px-3 py-1 rounded-full font-medium backdrop-blur-sm">
-          Demo data — connect AI backend for live forecast
+          {t.aiInsights.demoData}
         </span>
       </div>
     </div>
   )
 }
 
-function AnomalyCard({ anomaly, mock }: { anomaly: { chargePointId: string; type: string; severity: string; timestamp: string; description?: string }; mock?: boolean }) {
+function AnomalyCard({ anomaly, mock, t }: { anomaly: { chargePointId: string; type: string; severity: string; timestamp: string; description?: string }; mock?: boolean; t?: any }) {
   const severityColors: Record<string, string> = {
     high: '#f43f5e', medium: '#f59e0b', low: '#3b82f6', critical: '#7c3aed'
   }
@@ -249,10 +251,10 @@ function AnomalyCard({ anomaly, mock }: { anomaly: { chargePointId: string; type
             {anomaly.severity}
           </span>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">{anomaly.chargePointId} — {anomaly.description ?? 'Unusual pattern detected'}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{anomaly.chargePointId} — {anomaly.description ?? (t?.aiInsights?.unusualPattern ?? 'Unusual pattern detected')}</p>
         <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(anomaly.timestamp)}</p>
       </div>
-      {mock && <span className="text-[10px] text-slate-300 flex-shrink-0">demo</span>}
+      {mock && <span className="text-[10px] text-slate-300 flex-shrink-0">{t?.aiInsights?.demo ?? 'demo'}</span>}
     </div>
   )
 }

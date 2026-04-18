@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Activity, Eye, EyeOff, Zap } from 'lucide-react'
+import { Activity, Eye, EyeOff, UserPlus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { register: registerUser, isAuthenticated } = useAuth()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -13,21 +14,20 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    if (login && localStorage.getItem('token')) {
-      // Small workaround to prevent instant flicker while loading checking
+    if (isAuthenticated) {
       setTimeout(() => navigate('/dashboard'), 100)
     }
-  }, [])
+  }, [isAuthenticated, navigate])
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg('')
     try {
-      await login({ email, password })
+      await registerUser({ name, email, password })
       navigate('/dashboard')
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || 'Login failed')
+      setErrorMsg(err.response?.data?.message || err.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -59,7 +59,7 @@ export default function LoginPage() {
             <Activity size={28} color="white" />
           </div>
           <h1 className="text-white text-2xl font-bold">OCPP Dashboard</h1>
-          <p className="text-slate-400 text-sm mt-1">EV Charging Management Platform</p>
+          <p className="text-slate-400 text-sm mt-1">Create your account</p>
         </div>
 
         {/* Card */}
@@ -71,7 +71,10 @@ export default function LoginPage() {
             backdropFilter: 'blur(12px)',
           }}
         >
-          <h2 className="text-white font-semibold text-lg mb-6">Sign in to your account</h2>
+          <h2 className="text-white font-semibold text-lg mb-6 flex items-center gap-2">
+            <UserPlus size={20} className="text-blue-400" />
+            Register new user
+          </h2>
 
           {errorMsg && (
             <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
@@ -79,7 +82,19 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="block text-slate-300 text-sm font-medium mb-1.5">Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                placeholder="John Doe"
+                required
+              />
+            </div>
             <div>
               <label className="block text-slate-300 text-sm font-medium mb-1.5">Email address</label>
               <input
@@ -88,7 +103,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                placeholder="admin@example.com"
+                placeholder="user@example.com"
                 required
               />
             </div>
@@ -117,7 +132,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl text-white font-semibold text-sm transition-all mt-2"
+              className="w-full py-2.5 rounded-xl text-white font-semibold text-sm transition-all mt-6"
               style={{
                 background: loading
                   ? 'rgba(59,130,246,0.5)'
@@ -125,25 +140,15 @@ export default function LoginPage() {
                 boxShadow: loading ? 'none' : '0 4px 14px rgba(59,130,246,0.4)',
               }}
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? 'Creating account…' : 'Register'}
             </button>
           </form>
 
-          {/* Demo notice */}
-          <div
-            className="mt-6 p-3 rounded-xl flex items-start gap-2.5"
-            style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)' }}
-          >
-            <Zap size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
-            <p className="text-slate-400 text-xs leading-relaxed">
-              <span className="text-blue-400 font-medium">Demo mode:</span> Pre-filled credentials bypass authentication. Authentication can be integrated with your backend.
-            </p>
-          </div>
           <div className="mt-6 text-center">
             <p className="text-slate-400 text-sm">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
-                Create one
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
+                Sign in
               </Link>
             </p>
           </div>

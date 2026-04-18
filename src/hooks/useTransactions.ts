@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { transactionsApi } from '@/api/transactions'
 
 export const transactionKeys = {
@@ -12,6 +12,18 @@ export function useTransactions(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: transactionKeys.list(params),
     queryFn: () => transactionsApi.getAll(params),
+  })
+}
+
+export function useInfiniteTransactions(params?: Record<string, unknown>) {
+  return useInfiniteQuery({
+    queryKey: transactionKeys.list(params),
+    queryFn: ({ pageParam = 1 }) => transactionsApi.getAll({ ...params, page: pageParam, limit: 15 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any) => {
+      const { page, totalPages } = lastPage.meta || {}
+      return page < totalPages ? page + 1 : undefined
+    },
   })
 }
 

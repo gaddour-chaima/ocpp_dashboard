@@ -59,26 +59,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Environment */}
-        <div className="card p-5">
-          <SectionTitle icon={<Globe size={16} className="text-emerald-500" />} title={t.settings.environment} />
-          <div className="space-y-3 mt-4">
-            {[
-              { label: t.settings.apiBaseUrl, value: apiBase, mono: true },
-              { label: t.settings.environment, value: import.meta.env.MODE ?? 'development', mono: false },
-              { label: t.settings.protocol, value: 'OCPP 1.6J', mono: false },
-              { label: t.settings.frontend, value: 'React + Vite + TypeScript', mono: false },
-              { label: t.settings.build, value: import.meta.env.PROD ? 'Production' : 'Development', mono: false },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-700 last:border-0 gap-4">
-                <span className="text-sm text-slate-500 flex-shrink-0">{item.label}</span>
-                <span className={`text-sm text-right truncate ${item.mono ? 'font-mono text-blue-600 text-xs' : 'text-slate-700 dark:text-slate-300 font-medium'}`}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Theme & Language Preferences */}
         <div className="card p-5">
@@ -142,13 +122,13 @@ export default function SettingsPage() {
 
         {/* Notification Preferences */}
         <div className="card p-5">
-          <SectionTitle icon={<Bell size={16} className="text-amber-500" />} title="Notifications" />
+          <SectionTitle icon={<Bell size={16} className="text-amber-500" />} title={t.settings.notifications} />
           <div className="space-y-4 mt-4">
             {[
-              { label: 'Charger Goes Offline', desc: 'Alert when a charger disconnects', enabled: true },
-              { label: 'Fault Detected', desc: 'Alert on Faulted status', enabled: true },
-              { label: 'Session Complete', desc: 'Notify when charging ends', enabled: false },
-              { label: 'AI Anomaly', desc: 'Alert when AI detects unusual behavior', enabled: true },
+              { label: t.settings.chargerOffline, desc: t.settings.chargerOfflineDesc, enabled: true },
+              { label: t.settings.faultDetected, desc: t.settings.faultDetectedDesc, enabled: true },
+              { label: t.settings.sessionComplete, desc: t.settings.sessionCompleteDesc, enabled: false },
+              { label: t.settings.aiAnomaly, desc: t.settings.aiAnomalyDesc, enabled: true },
             ].map((n, i) => (
               <div key={i} className="flex items-center justify-between gap-4">
                 <div>
@@ -158,50 +138,10 @@ export default function SettingsPage() {
                 <ToggleSwitch enabled={n.enabled} />
               </div>
             ))}
-            <p className="text-xs text-slate-400 italic">Notification delivery connects to your alerting backend.</p>
+            <p className="text-xs text-slate-400 italic">{t.settings.notifNote}</p>
           </div>
         </div>
 
-        {/* Security */}
-        <div className="card p-5">
-          <SectionTitle icon={<Shield size={16} className="text-rose-500" />} title="Security" />
-          <div className="space-y-3 mt-4">
-            {[
-              { label: 'Authentication', value: 'JWT Bearer Token (placeholder)' },
-              { label: 'OCPP Auth', value: 'Basic Auth / Certificates' },
-              { label: 'TLS', value: 'WSS Secured' },
-              { label: 'Session Timeout', value: '30 minutes' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm text-slate-500">{item.label}</span>
-                <span className="text-sm text-slate-700 font-medium">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* About */}
-        <div className="card p-5">
-          <SectionTitle icon={<Info size={16} className="text-slate-400" />} title="About" />
-          <div className="mt-4 space-y-3">
-            {[
-              { label: 'Project', value: 'OCPP EV Charging Dashboard' },
-              { label: 'Version', value: '1.0.0' },
-              { label: 'Protocol', value: 'OCPP 1.6 JSON' },
-              { label: 'Framework', value: 'React 18 + Vite + TypeScript' },
-              { label: 'Charting', value: 'Recharts' },
-              { label: 'State', value: 'TanStack Query v5' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm text-slate-500">{item.label}</span>
-                <span className="text-sm text-slate-700 font-medium">{item.value}</span>
-              </div>
-            ))}
-            <p className="text-xs text-slate-400 italic mt-2 text-center">
-              Final Year Engineering Project — EV Charging Management Platform
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import {
 } from '@/hooks/useStats'
 import { useTransactionOverview } from '@/hooks/useTransactions'
 import { useChargePoints } from '@/hooks/useChargePoints'
+import { useLang } from '@/contexts/LangContext'
 import { formatEnergy, formatDateTime, formatTimeAgo } from '@/utils/formatters'
 import { getStatusChartColor } from '@/utils/status'
 
@@ -27,6 +28,7 @@ const CHART_COLORS = {
 }
 
 export default function DashboardPage() {
+  const { t } = useLang()
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useStatsOverview()
   const { data: energyDaily, isLoading: energyDailyLoading } = useEnergyDaily()
   const { data: energyMonthly, isLoading: energyMonthlyLoading } = useEnergyMonthly()
@@ -59,60 +61,60 @@ export default function DashboardPage() {
         ) : (
           <>
             <StatCard
-              title="Total Charge Points"
+              title={t.dashboard.totalChargePoints}
               value={stats?.totalChargePoints ?? stats?.total_charge_points ?? '—'}
               icon={<Zap size={18} />}
               variant="blue"
-              subtitle="Registered chargers"
+              subtitle={t.dashboard.registeredChargers}
             />
             <StatCard
-              title="Online"
+              title={t.dashboard.online}
               value={stats?.onlineChargePoints ?? stats?.online_charge_points ?? '—'}
               icon={<Wifi size={18} />}
               variant="emerald"
-              subtitle="Currently reachable"
+              subtitle={t.dashboard.currentlyReachable}
             />
             <StatCard
-              title="Offline"
+              title={t.dashboard.offline}
               value={stats?.offlineChargePoints ?? stats?.offline_charge_points ?? '—'}
               icon={<ZapOff size={18} />}
               variant="rose"
-              subtitle="Not responding"
+              subtitle={t.dashboard.notResponding}
             />
             <StatCard
-              title="Charging"
+              title={t.dashboard.charging}
               value={stats?.chargingChargePoints ?? stats?.charging_charge_points ?? '—'}
               icon={<BatteryCharging size={18} />}
               variant="blue"
-              subtitle="Active sessions"
+              subtitle={t.dashboard.activeSessions2}
             />
             <StatCard
-              title="Total Transactions"
+              title={t.dashboard.totalTransactions}
               value={stats?.totalTransactions ?? txOverview?.total ?? '—'}
               icon={<ArrowLeftRight size={18} />}
               variant="default"
-              subtitle="All time"
+              subtitle={t.dashboard.allTime}
             />
             <StatCard
-              title="Active Sessions"
+              title={t.dashboard.activeSessions}
               value={stats?.activeTransactions ?? txOverview?.active ?? '—'}
               icon={<Activity size={18} />}
               variant="emerald"
-              subtitle="In progress"
+              subtitle={t.dashboard.inProgress}
             />
             <StatCard
-              title="Total Energy"
+              title={t.dashboard.totalEnergy}
               value={formatEnergy(stats?.totalEnergy ?? txOverview?.totalEnergy)}
               icon={<TrendingUp size={18} />}
               variant="amber"
-              subtitle="All time consumed"
+              subtitle={t.dashboard.allTimeConsumed}
             />
             <StatCard
-              title="Avg per Session"
+              title={t.dashboard.avgPerSession}
               value={formatEnergy(stats?.avgEnergyPerSession ?? txOverview?.avgEnergy)}
               icon={<CheckCircle2 size={18} />}
               variant="default"
-              subtitle="Mean session energy"
+              subtitle={t.dashboard.meanSessionEnergy}
             />
           </>
         )}
@@ -122,7 +124,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Daily Energy - spans 2 */}
         <div className="lg:col-span-2">
-          <ChartCard title="Daily Energy Consumption" subtitle="Last 30 days (kWh)">
+          <ChartCard title={t.dashboard.dailyEnergy} subtitle={t.dashboard.dailyEnergySubtitle}>
             {energyDailyLoading ? <ChartSkeleton height={220} /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={energyDailyData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
@@ -147,7 +149,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Status Distribution */}
-        <ChartCard title="Status Distribution" subtitle="Current charger states">
+        <ChartCard title={t.dashboard.statusDistribution} subtitle={t.dashboard.statusDistSubtitle}>
           {statusDistLoading ? <ChartSkeleton height={220} /> : (
             <div className="flex flex-col items-center gap-3 pb-2">
               <ResponsiveContainer width="100%" height={160}>
@@ -185,7 +187,7 @@ export default function DashboardPage() {
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Daily Sessions */}
-        <ChartCard title="Daily Sessions" subtitle="Charging sessions per day">
+        <ChartCard title={t.dashboard.dailySessions} subtitle={t.dashboard.dailySessionsSubtitle}>
           {sessionsDailyLoading ? <ChartSkeleton height={180} /> : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={sessionsDailyData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
@@ -203,10 +205,10 @@ export default function DashboardPage() {
         </ChartCard>
 
         {/* Realtime Power */}
-        <ChartCard title="Realtime Power" subtitle="Live power draw (kW)" action={
+        <ChartCard title={t.dashboard.realtimePower} subtitle={t.dashboard.realtimePowerSubtitle} action={
           <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live
+            {t.dashboard.live}
           </span>
         }>
           {powerLoading ? <ChartSkeleton height={180} /> : (
@@ -231,7 +233,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Monthly Energy */}
         <div className="lg:col-span-2">
-          <ChartCard title="Monthly Energy" subtitle="Energy consumption by month (kWh)">
+          <ChartCard title={t.dashboard.monthlyEnergy} subtitle={t.dashboard.monthlyEnergySubtitle}>
             {energyMonthlyLoading ? <ChartSkeleton height={180} /> : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={energyMonthlyData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
@@ -260,16 +262,16 @@ export default function DashboardPage() {
           {/* Health Card */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-800">System Health</p>
+              <p className="text-sm font-semibold text-slate-800">{t.dashboard.systemHealth}</p>
               <RefreshCw size={14} className="text-slate-400" />
             </div>
             <div className="space-y-2.5">
-              <HealthRow label="API Status" value={health?.status ?? 'Online'} ok={!!health} />
-              <HealthRow label="Database" value={health?.database ?? 'unknown'} ok={health?.database === 'connected'} />
-              <HealthRow label="WebSocket" value={health?.websocket ?? 'unknown'} ok={health?.websocket === 'running'} />
+              <HealthRow label={t.dashboard.apiStatus} value={health?.status ?? 'Online'} ok={!!health} />
+              <HealthRow label={t.dashboard.database} value={health?.database ?? t.common.unknown} ok={health?.database === 'connected'} />
+              <HealthRow label={t.dashboard.webSocket} value={health?.websocket ?? t.common.unknown} ok={health?.websocket === 'running'} />
               {health?.uptime != null && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Uptime</span>
+                  <span className="text-slate-500">{t.dashboard.uptime}</span>
                   <span className="text-slate-700 font-medium">{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</span>
                 </div>
               )}
@@ -278,10 +280,10 @@ export default function DashboardPage() {
 
           {/* Recent Charge Points */}
           <div className="card p-4">
-            <p className="text-sm font-semibold text-slate-800 mb-3">Recent Chargers</p>
+            <p className="text-sm font-semibold text-slate-800 mb-3">{t.dashboard.recentChargers}</p>
             <div className="space-y-2">
               {recentCPs.length === 0 ? (
-                <p className="text-xs text-slate-400 py-2 text-center">No chargers found</p>
+                <p className="text-xs text-slate-400 py-2 text-center">{t.dashboard.noChargers}</p>
               ) : recentCPs.map((cp: { chargePointId?: string; id?: string; status?: string; lastSeen?: string }) => (
                 <div key={cp.chargePointId ?? cp.id} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">

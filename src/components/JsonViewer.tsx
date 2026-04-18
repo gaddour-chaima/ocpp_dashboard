@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useLang } from '@/contexts/LangContext'
 
 interface JsonViewerProps {
   data: unknown
@@ -28,7 +29,9 @@ function highlight(json: string): string {
     )
 }
 
-export default function JsonViewer({ data, title = 'Payload', onClose }: JsonViewerProps) {
+export default function JsonViewer({ data, title, onClose }: JsonViewerProps) {
+  const { t } = useLang()
+  const displayTitle = title ?? t.common.payload
   const [copied, setCopied] = useState(false)
 
   const jsonStr = JSON.stringify(data, null, 2)
@@ -69,7 +72,7 @@ export default function JsonViewer({ data, title = 'Payload', onClose }: JsonVie
           className="flex items-center justify-between px-5 py-4 border-b"
           style={{ borderColor: 'rgba(255,255,255,0.08)' }}
         >
-          <p className="text-white font-semibold text-sm">{title}</p>
+          <p className="text-white font-semibold text-sm">{displayTitle}</p>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
@@ -79,7 +82,7 @@ export default function JsonViewer({ data, title = 'Payload', onClose }: JsonVie
                 color: copied ? '#10b981' : '#94a3b8',
               }}
             >
-              {copied ? 'Copied!' : 'Copy JSON'}
+              {copied ? t.common.copied : t.common.copyJson}
             </button>
             <button
               onClick={onClose}

@@ -11,11 +11,13 @@ import { TableSkeleton } from '@/components/LoadingSkeleton'
 import { useChargePoints } from '@/hooks/useChargePoints'
 import { formatTimeAgo } from '@/utils/formatters'
 import type { ChargePoint } from '@/types'
+import { useLang } from '@/contexts/LangContext'
 
 const STATUS_OPTIONS = ['All', 'Available', 'Charging', 'Offline', 'Faulted', 'Preparing', 'Reserved', 'Unavailable']
 const PAGE_SIZE = 12
 
 export default function ChargePointsPage() {
+  const { t } = useLang()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -45,8 +47,8 @@ export default function ChargePointsPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader
-        title="Charge Points"
-        subtitle={`${filtered.length} charger${filtered.length !== 1 ? 's' : ''} found`}
+        title={t.chargePoints.title}
+        subtitle={t.chargePoints.chargersFound(filtered.length)}
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -67,7 +69,7 @@ export default function ChargePointsPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <SearchInput value={search} onChange={handleSearch} placeholder="Search by ID, vendor, model…" className="flex-1 max-w-sm" />
+        <SearchInput value={search} onChange={handleSearch} placeholder={t.chargePoints.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
           <Filter size={14} className="text-slate-400 flex-shrink-0" />
           {STATUS_OPTIONS.map((s) => (
@@ -80,7 +82,7 @@ export default function ChargePointsPage() {
                   : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {s}
+              {s === 'All' ? t.common.all : (t.status[s as keyof typeof t.status] ?? s)}
             </button>
           ))}
         </div>
@@ -92,12 +94,12 @@ export default function ChargePointsPage() {
         <TableSkeleton rows={8} />
       ) : filtered.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<Zap size={24} />} title="No charge points found" description="Try adjusting your search or filter criteria." />
+          <EmptyState icon={<Zap size={24} />} title={t.chargePoints.noChargers} description={t.chargePoints.noChargersDesc} />
         </div>
       ) : viewMode === 'table' ? (
-        <ChargePointTable items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} />
+        <ChargePointTable items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} t={t} />
       ) : (
-        <ChargePointGrid items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} />
+        <ChargePointGrid items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} t={t} />
       )}
 
       {!isLoading && !isError && (
@@ -107,18 +109,18 @@ export default function ChargePointsPage() {
   )
 }
 
-function ChargePointTable({ items, onSelect }: { items: ChargePoint[]; onSelect: (id: string) => void }) {
+function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSelect: (id: string) => void; t: any }) {
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Charge Point</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Vendor / Model</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Firmware</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Last Seen</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.chargePoint}</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.status}</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">{t.chargePoints.vendorModel}</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">{t.chargePoints.firmware}</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">{t.chargePoints.lastSeen}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -157,7 +159,7 @@ function ChargePointTable({ items, onSelect }: { items: ChargePoint[]; onSelect:
                     onClick={(e) => { e.stopPropagation(); onSelect(cp.chargePointId ?? cp.id!) }}
                     className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                   >
-                    Details →
+                    {t.common.details} →
                   </button>
                 </td>
               </tr>
@@ -169,7 +171,7 @@ function ChargePointTable({ items, onSelect }: { items: ChargePoint[]; onSelect:
   )
 }
 
-function ChargePointGrid({ items, onSelect }: { items: ChargePoint[]; onSelect: (id: string) => void }) {
+function ChargePointGrid({ items, onSelect, t }: { items: ChargePoint[]; onSelect: (id: string) => void; t: any }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {items.map((cp) => (

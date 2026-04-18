@@ -15,6 +15,7 @@ import {
   useChargePoint, useChargePointStatusHistory,
   useChargePointMeterValues, useChargePointTransactions
 } from '@/hooks/useChargePoints'
+import { useLang } from '@/contexts/LangContext'
 import { formatDateTime, formatTimeAgo, formatEnergy, formatDuration } from '@/utils/formatters'
 import { getStatusChartColor } from '@/utils/status'
 import type { Transaction, StatusHistory, MeterValue } from '@/types'
@@ -23,9 +24,12 @@ const TABS = ['Overview', 'Status History', 'Meter Values', 'Transactions'] as c
 type Tab = typeof TABS[number]
 
 export default function ChargePointDetailPage() {
+  const { t } = useLang()
   const { chargePointId } = useParams<{ chargePointId: string }>()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<Tab>('Overview')
+  
+  const TABS = [t.chargePoints.tabOverview, t.chargePoints.tabStatusHistory, t.chargePoints.tabMeterValues, t.chargePoints.tabTransactions]
+  const [tab, setTab] = useState<string>(TABS[0])
 
   const { data: cp, isLoading, isError, refetch } = useChargePoint(chargePointId!)
   const { data: statusHistory } = useChargePointStatusHistory(chargePointId!)
@@ -61,13 +65,13 @@ export default function ChargePointDetailPage() {
     <div className="space-y-5 animate-fade-in">
       <PageHeader
         title={chargePointId ?? ''}
-        subtitle="Charge point details"
+        subtitle={t.chargePoints.detailSubtitle}
         actions={
           <button
             onClick={() => navigate('/charge-points')}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
           >
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t.common.back}
           </button>
         }
       />
@@ -83,34 +87,34 @@ export default function ChargePointDetailPage() {
               <Zap size={24} className="text-blue-600" />
             </div>
             <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3">
-              <InfoRow icon={<AlertCircle size={13} />} label="Status">
+              <InfoRow icon={<AlertCircle size={13} />} label={t.chargePoints.statusLabel}>
                 <StatusBadge status={charger.status ?? 'Offline'} />
               </InfoRow>
-              <InfoRow icon={<Clock size={13} />} label="Last Seen">
+              <InfoRow icon={<Clock size={13} />} label={t.chargePoints.lastSeenLabel}>
                 <span className="text-sm text-slate-700">{formatTimeAgo(charger.lastSeen)}</span>
               </InfoRow>
-              <InfoRow icon={<Cpu size={13} />} label="Vendor / Model">
+              <InfoRow icon={<Cpu size={13} />} label={t.chargePoints.vendorModelLabel}>
                 <span className="text-sm text-slate-700">{[charger.vendor, charger.model].filter(Boolean).join(' / ') || '—'}</span>
               </InfoRow>
-              <InfoRow icon={<Wifi size={13} />} label="Firmware">
+              <InfoRow icon={<Wifi size={13} />} label={t.chargePoints.firmwareLabel}>
                 <span className="text-sm font-mono text-slate-600">{charger.firmwareVersion ?? '—'}</span>
               </InfoRow>
-              <InfoRow icon={<Cpu size={13} />} label="ICCID">
+              <InfoRow icon={<Cpu size={13} />} label={t.chargePoints.iccid}>
                 <span className="text-xs font-mono text-slate-500">{charger.iccid ?? '—'}</span>
               </InfoRow>
-              <InfoRow icon={<Cpu size={13} />} label="IMSI">
+              <InfoRow icon={<Cpu size={13} />} label={t.chargePoints.imsi}>
                 <span className="text-xs font-mono text-slate-500">{charger.imsi ?? '—'}</span>
               </InfoRow>
-              <InfoRow icon={<Clock size={13} />} label="Registered">
+              <InfoRow icon={<Clock size={13} />} label={t.chargePoints.registered}>
                 <span className="text-sm text-slate-700">{formatDateTime(charger.createdAt)}</span>
               </InfoRow>
-              <InfoRow icon={<ArrowLeftRight size={13} />} label="Sessions">
+              <InfoRow icon={<ArrowLeftRight size={13} />} label={t.chargePoints.sessions}>
                 <span className="text-sm font-semibold text-slate-800">{txData.length}</span>
               </InfoRow>
-              <InfoRow icon={<Activity size={13} />} label="Max Current">
+              <InfoRow icon={<Activity size={13} />} label={t.chargePoints.maxCurrent}>
                 <span className="text-sm text-slate-700">{charger.maxCurrent !== undefined && charger.maxCurrent !== null ? `${charger.maxCurrent}A` : '—'}</span>
               </InfoRow>
-              <InfoRow icon={<Battery size={13} />} label="Max Energy">
+              <InfoRow icon={<Battery size={13} />} label={t.chargePoints.maxEnergy}>
                 <span className="text-sm text-slate-700">{charger.maxEnergy !== undefined && charger.maxEnergy !== null ? `${charger.maxEnergy}kW·h` : '—'}</span>
               </InfoRow>
             </div>
@@ -134,11 +138,11 @@ export default function ChargePointDetailPage() {
       </div>
 
       {/* Tab Content */}
-      {tab === 'Overview' && (
+      {tab === t.chargePoints.tabOverview && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Meter Values Over Time" subtitle="Energy delivered (Wh)">
+          <ChartCard title={t.chargePoints.meterReadingsChart} subtitle={t.chargePoints.meterReadingsSubtitle}>
             {meterData.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">No meter data</div>
+              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">{t.chargePoints.noMeterData}</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={meterData.slice(-50)} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
@@ -159,9 +163,9 @@ export default function ChargePointDetailPage() {
             )}
           </ChartCard>
 
-          <ChartCard title="Status History" subtitle="State changes over time">
+          <ChartCard title={t.chargePoints.statusHistoryChart} subtitle={t.chargePoints.statusHistorySubtitle}>
             {statusHistoryData.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">No history</div>
+              <div className="flex items-center justify-center h-40 text-slate-400 text-sm">{t.chargePoints.noHistory}</div>
             ) : (
               <div className="px-4 py-2 space-y-2 max-h-52 overflow-y-auto">
                 {statusHistoryData.slice(-15).reverse().map((sh, i) => (
@@ -182,20 +186,20 @@ export default function ChargePointDetailPage() {
         </div>
       )}
 
-      {tab === 'Status History' && (
+      {tab === t.chargePoints.tabStatusHistory && (
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
-            <p className="font-semibold text-slate-800 text-sm">Status History ({statusHistoryData.length} records)</p>
+            <p className="font-semibold text-slate-800 text-sm">{t.chargePoints.statusHistoryRecords(statusHistoryData.length)}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Timestamp</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Connector</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Error Code</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Info</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.timestamp}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.status}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.connector}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.errorCode}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.info}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -214,9 +218,9 @@ export default function ChargePointDetailPage() {
         </div>
       )}
 
-      {tab === 'Meter Values' && (
+      {tab === t.chargePoints.tabMeterValues && (
         <div className="space-y-4">
-          <ChartCard title="Meter Readings Chart" subtitle="Measurand values over time">
+          <ChartCard title={t.chargePoints.meterReadingsChart} subtitle={t.chargePoints.meterReadingsSubtitle}>
             {meterData.length === 0 ? <ChartSkeleton height={200} /> : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={meterData.slice(-30)} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
@@ -235,7 +239,7 @@ export default function ChargePointDetailPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    {['Timestamp', 'Measurand', 'Value', 'Unit', 'Transaction'].map((h) => (
+                    {[t.chargePoints.timestamp, t.chargePoints.measurand, t.chargePoints.value, t.chargePoints.unit, t.chargePoints.transaction].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -257,16 +261,16 @@ export default function ChargePointDetailPage() {
         </div>
       )}
 
-      {tab === 'Transactions' && (
+      {tab === t.chargePoints.tabTransactions && (
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
-            <p className="font-semibold text-slate-800 text-sm">Transactions ({txData.length})</p>
+            <p className="font-semibold text-slate-800 text-sm">{t.transactions.title} ({txData.length})</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  {['ID', 'Start Time', 'Stop Time', 'Duration', 'Energy', 'ID Tag', 'Status'].map((h) => (
+                  {[t.transactions.id, t.transactions.startTime, t.transactions.stopTime, t.transactions.duration, t.transactions.energy, t.transactions.idTag, t.transactions.status].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>

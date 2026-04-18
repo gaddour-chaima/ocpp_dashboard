@@ -1,3 +1,14 @@
+export type UserRole = 'admin' | 'operator' | 'viewer'
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  isActive: boolean
+  lastLogin?: string
+}
+
 export type ChargePointStatus =
   | 'Available'
   | 'Preparing'
