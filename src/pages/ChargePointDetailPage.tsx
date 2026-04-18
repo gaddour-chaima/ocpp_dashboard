@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts'
 import {
-  ArrowLeft, Zap, Clock, Cpu, Wifi, AlertCircle, ArrowLeftRight
+  ArrowLeft, Zap, Clock, Cpu, Wifi, AlertCircle, ArrowLeftRight, Activity, Battery
 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
@@ -106,6 +106,12 @@ export default function ChargePointDetailPage() {
               </InfoRow>
               <InfoRow icon={<ArrowLeftRight size={13} />} label="Sessions">
                 <span className="text-sm font-semibold text-slate-800">{txData.length}</span>
+              </InfoRow>
+              <InfoRow icon={<Activity size={13} />} label="Max Current">
+                <span className="text-sm text-slate-700">{charger.maxCurrent !== undefined && charger.maxCurrent !== null ? `${charger.maxCurrent}A` : '—'}</span>
+              </InfoRow>
+              <InfoRow icon={<Battery size={13} />} label="Max Energy">
+                <span className="text-sm text-slate-700">{charger.maxEnergy !== undefined && charger.maxEnergy !== null ? `${charger.maxEnergy}kW·h` : '—'}</span>
               </InfoRow>
             </div>
           </div>

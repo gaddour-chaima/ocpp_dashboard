@@ -23,6 +23,8 @@ export interface ChargePoint {
   createdAt?: string
   updatedAt?: string
   connectors?: Connector[]
+  maxCurrent?: number
+  maxEnergy?: number
 }
 
 export interface Connector {
