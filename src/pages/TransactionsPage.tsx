@@ -39,35 +39,39 @@ export default function TransactionsPage() {
     const pages = data?.pages || []
     const flatList = pages.flatMap((p: any) => p.data || [])
     
-    return flatList.map((tx: any) => ({
-      ...tx,
-      energyConsumed: tx.energyConsumed ?? tx.energy_consumed ?? (tx.meterStop != null && tx.meterStart != null ? tx.meterStop - tx.meterStart : undefined),
-      stopTime: tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time,
-      startTime: tx.startTime ?? tx.start_time,
-      chargePointId: tx.chargePointId ?? tx.charge_point_id ?? tx.chargepoint_id,
-      idTag: tx.idTag ?? tx.id_tag,
-      connectorId: tx.connectorId ?? tx.connector_id,
-      meterStart: tx.meterStart ?? tx.meter_start,
-      meterStop: tx.meterStop ?? tx.meter_stop,
-      stopReason: tx.stopReason ?? tx.stop_reason,
-      status: String(tx.status || (tx.stopTime ? 'completed' : 'active')).toLowerCase()
-    }))
+    return flatList.map((tx: any) => {
+      // Use explicit null check (not falsy) so status values like '0' or '' are handled correctly
+      const resolvedStatus = (tx.status !== null && tx.status !== undefined && tx.status !== '')
+        ? String(tx.status).toLowerCase()
+        : ((tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time) ? 'completed' : 'active')
+
+      return {
+        ...tx,
+        energyConsumed: tx.energyConsumed ?? tx.energy_consumed ?? (tx.meterStop != null && tx.meterStart != null ? tx.meterStop - tx.meterStart : undefined),
+        stopTime: tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time,
+        startTime: tx.startTime ?? tx.start_time,
+        chargePointId: tx.chargePointId ?? tx.charge_point_id ?? tx.chargepoint_id,
+        idTag: tx.idTag ?? tx.id_tag,
+        connectorId: tx.connectorId ?? tx.connector_id,
+        meterStart: tx.meterStart ?? tx.meter_start,
+        meterStop: tx.meterStop ?? tx.meter_stop,
+        stopReason: tx.stopReason ?? tx.stop_reason,
+        status: resolvedStatus,
+      }
+    })
   }, [data?.pages])
 
   const filtered = useMemo(() => {
-    return rawList.filter((tx) => {
-      const matchSearch = !search ||
-        String(tx.id).includes(search) ||
-        tx.chargePointId?.toLowerCase().includes(search.toLowerCase()) ||
-        tx.idTag?.toLowerCase().includes(search.toLowerCase())
-      
-      const txStatus = tx.status
-      const currentFilter = statusFilter.toLowerCase()
-      const matchStatus = currentFilter === 'all' || txStatus === currentFilter
-
-      return matchSearch && matchStatus
-    })
-  }, [rawList, search, statusFilter])
+    // Status filtering is handled server-side by the API (via ?status=... param).
+    // Client-side we only need to apply the search filter.
+    if (!search) return rawList
+    const q = search.toLowerCase()
+    return rawList.filter((tx) =>
+      String(tx.id).includes(search) ||
+      tx.chargePointId?.toLowerCase().includes(q) ||
+      tx.idTag?.toLowerCase().includes(q)
+    )
+  }, [rawList, search])
 
   // Infinite Scroll Observer
   useEffect(() => {
@@ -108,12 +112,12 @@ export default function TransactionsPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder={t.transactions.searchPlaceholder} className="flex-1 max-w-sm" />
+        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder={t.transactions.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
           {STATUS_OPTIONS.map((s) => (
             <button
               key={s}
-              onClick={() => { setStatusFilter(s); setPage(1) }}
+              onClick={() => { setStatusFilter(s) }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${statusFilter === s ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
             >

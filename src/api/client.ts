@@ -20,14 +20,20 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    // Automatically unwrap backend payload envelopes: { success: true, data: ... }
+    // Automatically unwrap backend payload envelopes: { success: true, data: ..., meta?: ... }
     if (
       response.data &&
       typeof response.data === 'object' &&
       'success' in response.data &&
       'data' in response.data
     ) {
-      response.data = response.data.data
+      // If there is pagination metadata, preserve { data, meta } together
+      // so infinite-scroll hooks can read both the list and page info.
+      if (response.data.meta) {
+        response.data = { data: response.data.data, meta: response.data.meta }
+      } else {
+        response.data = response.data.data
+      }
     }
     return response
   },
