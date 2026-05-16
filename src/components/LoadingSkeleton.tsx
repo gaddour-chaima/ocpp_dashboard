@@ -3,8 +3,8 @@ interface LoadingSkeletonProps {
   className?: string
 }
 
-export function SkeletonBlock({ className = '' }: { className?: string }) {
-  return <div className={`skeleton ${className}`} />
+export function SkeletonBlock({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`skeleton ${className}`} style={style} />
 }
 
 export function StatCardSkeleton() {
@@ -26,7 +26,7 @@ export function TableSkeleton({ rows = 5 }: LoadingSkeletonProps) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-100">
+        <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
           <SkeletonBlock className="h-4 w-32" />
           <SkeletonBlock className="h-4 w-20" />
           <SkeletonBlock className="h-4 w-28" />

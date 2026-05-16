@@ -18,6 +18,7 @@ import {
 import { useTransactionOverview } from '@/hooks/useTransactions'
 import { useChargePoints } from '@/hooks/useChargePoints'
 import { useLang } from '@/contexts/LangContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { formatEnergy, formatDateTime, formatTimeAgo } from '@/utils/formatters'
 import { getStatusChartColor } from '@/utils/status'
 
@@ -29,6 +30,7 @@ const CHART_COLORS = {
 
 export default function DashboardPage() {
   const { t } = useLang()
+  const { theme } = useTheme()
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useStatsOverview()
   const { data: energyDaily, isLoading: energyDailyLoading } = useEnergyDaily()
   const { data: energyMonthly, isLoading: energyMonthlyLoading } = useEnergyMonthly()
@@ -47,6 +49,19 @@ export default function DashboardPage() {
   const powerData = getArray(powerRealtime)
   const statusDistData = getArray(statusDist)
   const recentCPs = getArray(chargePoints).slice(0, 5)
+  const isDark = theme === 'dark'
+  const chartGridStroke = isDark ? '#334155' : '#f1f5f9'
+  const chartTick = isDark ? '#94a3b8' : '#94a3b8'
+  const tooltipStyle = {
+    background: isDark ? '#0f172a' : '#ffffff',
+    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: isDark ? '#e2e8f0' : '#0f172a',
+  }
+  const tooltipCursor = isDark
+    ? { fill: 'rgba(148,163,184,0.14)' }
+    : { fill: 'rgba(15,23,42,0.06)' }
 
   if (statsError) {
     return <ErrorState onRetry={refetchStats} />
@@ -134,11 +149,12 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor={CHART_COLORS.blue} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                    contentStyle={tooltipStyle}
+                    cursor={tooltipCursor}
                     formatter={(v: number) => [`${(v / 1000).toFixed(2)} kWh`, 'Energy']}
                   />
                   <Area type="monotone" dataKey="energy" stroke={CHART_COLORS.blue} strokeWidth={2} fill="url(#energyGrad)" dot={false} />
@@ -167,13 +183,14 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                    contentStyle={tooltipStyle}
+                    cursor={false}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 px-2">
                 {statusDistData.map((entry: { status: string; count: number }, i: number) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getStatusChartColor(entry.status) }} />
                     {entry.status} ({entry.count})
                   </div>
@@ -191,11 +208,12 @@ export default function DashboardPage() {
           {sessionsDailyLoading ? <ChartSkeleton height={180} /> : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={sessionsDailyData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={tooltipStyle}
+                  cursor={tooltipCursor}
                 />
                 <Bar dataKey="sessions" fill={CHART_COLORS.emerald} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="count" fill={CHART_COLORS.emerald} radius={[4, 4, 0, 0]} />
@@ -206,7 +224,7 @@ export default function DashboardPage() {
 
         {/* Realtime Power */}
         <ChartCard title={t.dashboard.realtimePower} subtitle={t.dashboard.realtimePowerSubtitle} action={
-          <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-500/15 px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {t.dashboard.live}
           </span>
@@ -214,12 +232,13 @@ export default function DashboardPage() {
           {powerLoading ? <ChartSkeleton height={180} /> : (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={powerData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false}
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false}
                   tickFormatter={(v: string) => v?.slice(11, 16) ?? v} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={tooltipStyle}
+                  cursor={tooltipCursor}
                   formatter={(v: number) => [`${(v / 1000).toFixed(2)} kW`, 'Power']}
                 />
                 <Line type="monotone" dataKey="power" stroke={CHART_COLORS.amber} strokeWidth={2} dot={false} />
@@ -243,11 +262,12 @@ export default function DashboardPage() {
                       <stop offset="100%" stopColor="#1d4ed8" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: chartTick }} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                    contentStyle={tooltipStyle}
+                    cursor={tooltipCursor}
                     formatter={(v: number) => [`${(v / 1000).toFixed(2)} kWh`, 'Energy']}
                   />
                   <Bar dataKey="energy" fill="url(#monthGrad)" radius={[4, 4, 0, 0]} />
@@ -262,8 +282,8 @@ export default function DashboardPage() {
           {/* Health Card */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-800">{t.dashboard.systemHealth}</p>
-              <RefreshCw size={14} className="text-slate-400" />
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t.dashboard.systemHealth}</p>
+              <RefreshCw size={14} className="text-slate-400 dark:text-slate-500" />
             </div>
             <div className="space-y-2.5">
               <HealthRow label={t.dashboard.apiStatus} value={health?.status ?? 'Online'} ok={!!health} />
@@ -272,7 +292,7 @@ export default function DashboardPage() {
               {health?.uptime != null && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500">{t.dashboard.uptime}</span>
-                  <span className="text-slate-700 font-medium">{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</span>
+                  <span className="text-slate-700 dark:text-slate-200 font-medium">{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</span>
                 </div>
               )}
             </div>
@@ -280,15 +300,15 @@ export default function DashboardPage() {
 
           {/* Recent Charge Points */}
           <div className="card p-4">
-            <p className="text-sm font-semibold text-slate-800 mb-3">{t.dashboard.recentChargers}</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-3">{t.dashboard.recentChargers}</p>
             <div className="space-y-2">
               {recentCPs.length === 0 ? (
-                <p className="text-xs text-slate-400 py-2 text-center">{t.dashboard.noChargers}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 py-2 text-center">{t.dashboard.noChargers}</p>
               ) : recentCPs.map((cp: { chargePointId?: string; id?: string; status?: string; lastSeen?: string }) => (
                 <div key={cp.chargePointId ?? cp.id} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <Zap size={12} className="text-blue-500 flex-shrink-0" />
-                    <span className="text-xs text-slate-700 font-medium truncate">{cp.chargePointId ?? cp.id}</span>
+                    <span className="text-xs text-slate-700 dark:text-slate-200 font-medium truncate">{cp.chargePointId ?? cp.id}</span>
                   </div>
                   <StatusBadge status={cp.status ?? 'Offline'} size="sm" />
                 </div>
@@ -304,7 +324,7 @@ export default function DashboardPage() {
 function HealthRow({ label, value, ok }: { label: string; value: string; ok: boolean }) {
   return (
     <div className="flex items-center justify-between text-xs">
-      <span className="text-slate-500">{label}</span>
+      <span className="text-slate-500 dark:text-slate-400">{label}</span>
       <span className={`flex items-center gap-1 font-medium ${ok ? 'text-emerald-600' : 'text-rose-500'}`}>
         <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-rose-500'}`} />
         {value}

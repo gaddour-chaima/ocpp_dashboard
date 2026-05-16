@@ -12,6 +12,7 @@ import { useEnergyDaily, useEnergyMonthly, useSessionsDaily,
   useStatusDistribution, useAvailability, useStatsOverview
 } from '@/hooks/useStats'
 import { useLang } from '@/contexts/LangContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { formatEnergy } from '@/utils/formatters'
 import { getStatusChartColor } from '@/utils/status'
 
@@ -19,6 +20,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#64748b'
 
 export default function AnalyticsPage() {
   const { t } = useLang()
+  const { theme } = useTheme()
   const { data: stats, isLoading: statsLoading } = useStatsOverview()
   const { data: energyDaily, isLoading: edLoading, isError: edError, refetch } = useEnergyDaily()
   const { data: energyMonthly, isLoading: emLoading } = useEnergyMonthly()
@@ -33,6 +35,17 @@ export default function AnalyticsPage() {
   const sdData = getArray(sessionsDaily)
   const distData = getArray(statusDist)
   const availData = getArray(availability)
+  const isDark = theme === 'dark'
+  const chartGridStroke = isDark ? '#334155' : '#f1f5f9'
+  const chartTick = isDark ? '#94a3b8' : '#94a3b8'
+  const tooltipStyle = {
+    background: isDark ? '#0f172a' : '#ffffff',
+    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: isDark ? '#e2e8f0' : '#0f172a',
+  }
+  const tooltipCursor = isDark ? { fill: 'rgba(148,163,184,0.14)' } : { fill: 'rgba(15,23,42,0.06)' }
 
   if (edError) return <ErrorState onRetry={refetch} />
 
@@ -66,10 +79,10 @@ export default function AnalyticsPage() {
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor}
                   formatter={(v: number) => [`${(v / 1000).toFixed(2)} kWh`, 'Energy']} />
                 <Area type="monotone" dataKey="energy" stroke="#3b82f6" strokeWidth={2} fill="url(#aBlue)" dot={false} />
               </AreaChart>
@@ -87,10 +100,10 @@ export default function AnalyticsPage() {
                     <stop offset="100%" stopColor="#1d4ed8" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor}
                   formatter={(v: number) => [`${(v / 1000).toFixed(2)} kWh`, 'Energy']} />
                 <Bar dataKey="energy" fill="url(#gMonthly)" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -105,10 +118,10 @@ export default function AnalyticsPage() {
           {sdLoading ? <ChartSkeleton height={200} /> : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={sdData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} />
                 <Bar dataKey="sessions" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -120,10 +133,10 @@ export default function AnalyticsPage() {
           {availLoading ? <ChartSkeleton height={200} /> : (
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={availData} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }}
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: chartTick }} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor}
                   formatter={(v: number) => [`${v.toFixed(1)}%`, 'Availability']} />
                 <Line type="monotone" dataKey="availability" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
                 <Line type="monotone" dataKey="uptime" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
@@ -148,7 +161,8 @@ export default function AnalyticsPage() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }} 
+                      contentStyle={tooltipStyle}
+                      cursor={false}
                       formatter={(v: number, name: string) => [v, t.status[name as keyof typeof t.status] ?? name]}
                     />
                   </PieChart>
@@ -158,9 +172,9 @@ export default function AnalyticsPage() {
                     <div key={i} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getStatusChartColor(entry.status) }} />
-                        <span className="text-slate-600">{t.status[entry.status as keyof typeof t.status] ?? entry.status}</span>
+                        <span className="text-slate-600 dark:text-slate-300">{t.status[entry.status as keyof typeof t.status] ?? entry.status}</span>
                       </div>
-                      <span className="font-semibold text-slate-800">{entry.count}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-100">{entry.count}</span>
                     </div>
                   ))}
                 </div>
@@ -182,9 +196,9 @@ export default function AnalyticsPage() {
                     { label: t.analytics.activeTx, value: stats?.activeTransactions ?? '—', color: '#10b981' },
                     { label: t.analytics.totalTx, value: stats?.totalTransactions ?? '—', color: '#64748b' },
                   ].map((item, i) => (
-                    <div key={i} className="flex flex-col items-center justify-center py-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <div key={i} className="flex flex-col items-center justify-center py-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                       <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
-                      <p className="text-xs text-slate-500 mt-1 text-center">{item.label}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">{item.label}</p>
                     </div>
                   ))
               }

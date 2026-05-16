@@ -53,13 +53,19 @@ export default function ChargePointsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-lg border transition-colors ${viewMode === 'table' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+              className={`p-2 rounded-lg border transition-colors ${viewMode === 'table'
+                ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
             >
               <List size={16} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg border transition-colors ${viewMode === 'grid' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+              className={`p-2 rounded-lg border transition-colors ${viewMode === 'grid'
+                ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
             >
               <LayoutGrid size={16} />
             </button>
@@ -67,20 +73,18 @@ export default function ChargePointsPage() {
         }
       />
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchInput value={search} onChange={handleSearch} placeholder={t.chargePoints.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter size={14} className="text-slate-400 flex-shrink-0" />
+          <Filter size={14} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
           {STATUS_OPTIONS.map((s) => (
             <button
               key={s}
               onClick={() => handleFilterChange(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                statusFilter === s
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
             >
               {s === 'All' ? t.common.all : (t.status[s as keyof typeof t.status] ?? s)}
             </button>
@@ -115,7 +119,7 @@ function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSele
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-100">
+            <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.chargePoint}</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.chargePoints.status}</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">{t.chargePoints.vendorModel}</th>
@@ -124,32 +128,32 @@ function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSele
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
             {items.map((cp) => (
               <tr
                 key={cp.chargePointId ?? cp.id}
-                className="hover:bg-slate-50 transition-colors cursor-pointer"
+                className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 onClick={() => onSelect(cp.chargePointId ?? cp.id!)}
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                       <Zap size={13} className="text-blue-500" />
                     </div>
-                    <span className="font-medium text-slate-800">{cp.chargePointId ?? cp.id}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-100">{cp.chargePointId ?? cp.id}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={cp.status ?? 'Offline'} />
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell">
-                  <span className="text-slate-600">{[cp.vendor, cp.model].filter(Boolean).join(' / ') || '—'}</span>
+                  <span className="text-slate-600 dark:text-slate-300">{[cp.vendor, cp.model].filter(Boolean).join(' / ') || '-'}</span>
                 </td>
                 <td className="px-4 py-3 hidden lg:table-cell">
-                  <span className="text-slate-500 text-xs font-mono">{cp.firmwareVersion ?? (cp as any).firmware_version ?? '—'}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-mono">{cp.firmwareVersion ?? (cp as any).firmware_version ?? '-'}</span>
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell">
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                     <Clock size={11} />
                     {formatTimeAgo(cp.lastSeen ?? (cp as any).last_seen)}
                   </div>
@@ -157,9 +161,9 @@ function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSele
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={(e) => { e.stopPropagation(); onSelect(cp.chargePointId ?? cp.id!) }}
-                    className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                    className="text-xs px-3 py-1.5 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/30 transition-colors font-medium"
                   >
-                    {t.common.details} →
+                    {t.common.details} {'->'}
                   </button>
                 </td>
               </tr>
@@ -181,21 +185,21 @@ function ChargePointGrid({ items, onSelect, t }: { items: ChargePoint[]; onSelec
           onClick={() => onSelect(cp.chargePointId ?? cp.id!)}
         >
           <div className="flex items-start justify-between mb-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center">
               <Zap size={16} className="text-blue-500" />
             </div>
             <StatusBadge status={cp.status ?? 'Offline'} size="sm" />
           </div>
-          <p className="font-semibold text-slate-800 text-sm mb-1">{cp.chargePointId ?? cp.id}</p>
+          <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm mb-1">{cp.chargePointId ?? cp.id}</p>
           {(cp.vendor || cp.model) && (
-            <p className="text-xs text-slate-500 mb-2">{[cp.vendor, cp.model].filter(Boolean).join(' ')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{[cp.vendor, cp.model].filter(Boolean).join(' ')}</p>
           )}
-          <div className="flex items-center gap-1 text-xs text-slate-400 mt-auto">
+          <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-auto">
             <Clock size={10} />
             {formatTimeAgo(cp.lastSeen)}
           </div>
           {cp.firmwareVersion && (
-            <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+            <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-1">
               <Cpu size={10} />
               <span className="font-mono">{cp.firmwareVersion}</span>
             </div>

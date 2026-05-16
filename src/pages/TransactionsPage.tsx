@@ -3,7 +3,6 @@ import { ArrowLeftRight, Clock, Zap, User } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import SearchInput from '@/components/SearchInput'
-import Pagination from '@/components/Pagination'
 import EmptyState from '@/components/EmptyState'
 import ErrorState from '@/components/ErrorState'
 import { TableSkeleton, StatCardSkeleton } from '@/components/LoadingSkeleton'
@@ -14,7 +13,6 @@ import type { Transaction } from '@/types'
 import { useLang } from '@/contexts/LangContext'
 
 const STATUS_OPTIONS = ['All', 'active', 'completed', 'stopped', 'error']
-const PAGE_SIZE = 15
 
 export default function TransactionsPage() {
   const { t } = useLang()
@@ -24,23 +22,22 @@ export default function TransactionsPage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const lastElementRef = useRef<HTMLTableRowElement | null>(null)
 
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    refetch, 
-    fetchNextPage, 
-    hasNextPage, 
-    isFetchingNextPage 
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useInfiniteTransactions({ status: statusFilter !== 'All' ? statusFilter : undefined })
-  
+
   const { data: overview, isLoading: overviewLoading } = useTransactionOverview()
   const rawList: Transaction[] = useMemo(() => {
     const pages = data?.pages || []
     const flatList = pages.flatMap((p: any) => p.data || [])
-    
+
     return flatList.map((tx: any) => {
-      // Use explicit null check (not falsy) so status values like '0' or '' are handled correctly
       const resolvedStatus = (tx.status !== null && tx.status !== undefined && tx.status !== '')
         ? String(tx.status).toLowerCase()
         : ((tx.stopTime ?? tx.stop_time ?? tx.endTime ?? tx.end_time) ? 'completed' : 'active')
@@ -62,8 +59,6 @@ export default function TransactionsPage() {
   }, [data?.pages])
 
   const filtered = useMemo(() => {
-    // Status filtering is handled server-side by the API (via ?status=... param).
-    // Client-side we only need to apply the search filter.
     if (!search) return rawList
     const q = search.toLowerCase()
     return rawList.filter((tx) =>
@@ -73,30 +68,19 @@ export default function TransactionsPage() {
     )
   }, [rawList, search])
 
-  // Infinite Scroll Observer
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect()
-
     observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage()
     })
-
-    if (lastElementRef.current) {
-      observerRef.current.observe(lastElementRef.current)
-    }
-
+    if (lastElementRef.current) observerRef.current.observe(lastElementRef.current)
     return () => observerRef.current?.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  const paginated = filtered
 
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader title={t.transactions.title} subtitle={t.transactions.subtitle} />
 
-      {/* Overview stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {overviewLoading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
@@ -110,16 +94,18 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder={t.transactions.searchPlaceholder} className="flex-1 max-w-sm" />
+        <SearchInput value={search} onChange={(v) => setSearch(v)} placeholder={t.transactions.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
           {STATUS_OPTIONS.map((s) => (
             <button
               key={s}
-              onClick={() => { setStatusFilter(s) }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${statusFilter === s ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                statusFilter === s
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
             >
               {s === 'All' ? t.common.all : (t.status[s as keyof typeof t.status] ?? s)}
             </button>
@@ -140,48 +126,48 @@ export default function TransactionsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
+                <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
                   {[t.transactions.id, t.transactions.chargePoint, t.transactions.connector, t.transactions.idTag, t.transactions.start, t.transactions.stop, t.transactions.duration, t.transactions.energy, t.transactions.status].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {paginated.map((tx, idx) => {
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
+                {filtered.map((tx, idx) => {
                   const status = tx.status ?? (tx.stopTime ? 'completed' : 'active')
-                    return (
-                      <tr
-                        key={tx.id ? `tx-${tx.id}` : `tx-fallback-${idx}`}
-                        ref={idx === paginated.length - 1 ? lastElementRef : null}
-                        className="hover:bg-slate-50 transition-colors cursor-pointer"
-                        onClick={() => setSelected(tx)}
-                      >
+                  return (
+                    <tr
+                      key={tx.id ? `tx-${tx.id}` : `tx-fallback-${idx}`}
+                      ref={idx === filtered.length - 1 ? lastElementRef : null}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+                      onClick={() => setSelected(tx)}
+                    >
                       <td className="px-4 py-3">
-                        <span className="text-xs font-mono text-blue-600 font-medium">#{tx.id}</span>
+                        <span className="text-xs font-mono text-blue-600 dark:text-blue-300 font-medium">#{tx.id}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <Zap size={12} className="text-blue-400 flex-shrink-0" />
-                          <span className="text-xs text-slate-700 font-medium">{tx.chargePointId}</span>
+                          <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">{tx.chargePointId}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{tx.connectorId ?? '—'}</td>
+                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{tx.connectorId ?? '-'}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          <User size={11} className="text-slate-400" />
-                          <span className="text-xs font-mono text-slate-600">{tx.idTag ?? '—'}</span>
+                          <User size={11} className="text-slate-400 dark:text-slate-500" />
+                          <span className="text-xs font-mono text-slate-600 dark:text-slate-300">{tx.idTag ?? '-'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{formatDateTime(tx.startTime)}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{formatDateTime(tx.stopTime)}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{formatDuration(tx.startTime, tx.stopTime ?? null)}</td>
-                      <td className="px-4 py-3 text-xs font-semibold text-slate-800">{formatEnergy(tx.energyConsumed)}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatDateTime(tx.startTime)}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatDateTime(tx.stopTime)}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{formatDuration(tx.startTime, tx.stopTime ?? null)}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-slate-800 dark:text-slate-100">{formatEnergy(tx.energyConsumed)}</td>
                       <td className="px-4 py-3"><StatusBadge status={status} size="sm" /></td>
                       <td className="px-4 py-3">
                         <button
                           onClick={(e) => { e.stopPropagation(); setSelected(tx) }}
-                          className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+                          className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                         >
                           {t.common.view}
                         </button>
@@ -195,21 +181,18 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Loading indicator for next page */}
       {isFetchingNextPage && (
         <div className="flex justify-center py-4">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Visible count indicator */}
       {!isLoading && filtered.length > 0 && (
-        <p className="text-center text-xs text-slate-400 py-4">
+        <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-4">
           {t.common.showingResults(1, filtered.length, data?.pages[0]?.meta?.total || filtered.length)}
         </p>
       )}
 
-      {/* Detail Drawer */}
       {selected && <TransactionDrawer tx={selected} onClose={() => setSelected(null)} t={t} />}
     </div>
   )
@@ -219,17 +202,16 @@ function TransactionDrawer({ tx, onClose, t }: { tx: Transaction; onClose: () =>
   const status = tx.status ?? (tx.stopTime ? 'completed' : 'active')
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
       <div
-        className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col animate-slide-in"
-        style={{ borderLeft: '1px solid #e2e8f0' }}
+        className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col animate-slide-in border-l border-slate-200 dark:border-slate-700"
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <p className="font-bold text-slate-900">{t.transactions.transactionTitle(tx.id)}</p>
+            <p className="font-bold text-slate-900 dark:text-slate-100">{t.transactions.transactionTitle(tx.id)}</p>
             <StatusBadge status={status} />
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">✕</button>
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">x</button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           <DrawerSection title={t.transactions.general}>
@@ -266,9 +248,9 @@ function DrawerSection({ title, children }: { title: string; children: React.Rea
 function DrawerRow({ label, value, mono, highlight }: { label: string; value?: string | number | null; mono?: boolean; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-slate-500">{label}</span>
-      <span className={`text-sm text-right ${highlight ? 'font-bold text-slate-900' : 'text-slate-700'} ${mono ? 'font-mono' : ''}`}>
-        {value ?? '—'}
+      <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
+      <span className={`text-sm text-right ${highlight ? 'font-bold text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'} ${mono ? 'font-mono' : ''}`}>
+        {value ?? '-'}
       </span>
     </div>
   )

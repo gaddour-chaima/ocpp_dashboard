@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Activity, Eye, EyeOff, Zap } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -137,14 +137,6 @@ export default function LoginPage() {
             <Zap size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
             <p className="text-slate-400 text-xs leading-relaxed">
               <span className="text-blue-400 font-medium">Demo mode:</span> Pre-filled credentials bypass authentication. Authentication can be integrated with your backend.
-            </p>
-          </div>
-          <div className="mt-6 text-center">
-            <p className="text-slate-400 text-sm">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
-                Create one
-              </Link>
             </p>
           </div>
         </div>

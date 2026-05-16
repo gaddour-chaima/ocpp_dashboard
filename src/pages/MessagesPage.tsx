@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { MessageSquare, Eye, ChevronDown, ChevronRight, Filter } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
-import StatusBadge from '@/components/StatusBadge'
 import SearchInput from '@/components/SearchInput'
 import Pagination from '@/components/Pagination'
 import EmptyState from '@/components/EmptyState'
@@ -13,7 +12,6 @@ import { formatDateTime } from '@/utils/formatters'
 import type { OcppMessage } from '@/types'
 import { useLang } from '@/contexts/LangContext'
 
-const DIRECTION_OPTIONS = ['All', 'in', 'out', 'IN', 'OUT']
 const PAGE_SIZE = 20
 
 export default function MessagesPage() {
@@ -58,12 +56,8 @@ export default function MessagesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title={t.messages.title}
-        subtitle={t.messages.subtitle(filtered.length)}
-      />
+      <PageHeader title={t.messages.title} subtitle={t.messages.subtitle(filtered.length)} />
 
-      {/* Filters */}
       <div className="card p-4 space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <SearchInput
@@ -73,11 +67,11 @@ export default function MessagesPage() {
             className="flex-1"
           />
           <div className="flex items-center gap-2">
-            <Filter size={14} className="text-slate-400" />
+            <Filter size={14} className="text-slate-400 dark:text-slate-500" />
             <select
               value={actionFilter}
               onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
-              className="text-sm border border-slate-200 rounded-lg px-3 py-2 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             >
               {actions.map((a) => <option key={a} value={a === 'All' ? '' : a}>{a}</option>)}
             </select>
@@ -85,7 +79,7 @@ export default function MessagesPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-slate-400 font-medium">{t.messages.direction}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{t.messages.direction}</span>
           {['All', 'IN', 'OUT'].map((d) => (
             <button
               key={d}
@@ -93,11 +87,11 @@ export default function MessagesPage() {
               className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
                 dirFilter.toUpperCase() === d || (dirFilter === 'All' && d === 'All')
                   ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               {d === 'All' ? t.messages.dirAll : (
-                <span className={d === 'IN' ? 'text-emerald-600' : 'text-amber-600'}>
+                <span className={d === 'IN' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
                   {d === 'IN' ? t.messages.dirIn : t.messages.dirOut}
                 </span>
               )}
@@ -119,7 +113,7 @@ export default function MessagesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
+                <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
                   <th className="w-8 px-2 py-3" />
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.timestamp}</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.messages.chargePoint}</th>
@@ -129,7 +123,7 @@ export default function MessagesPage() {
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                 {paginated.map((msg, idx) => {
                   const id = msg.id
                   const isOpen = expanded.has(id)
@@ -137,43 +131,43 @@ export default function MessagesPage() {
                   return (
                     <React.Fragment key={id ? `msg-${id}` : `msg-fallback-${idx}`}>
                       <tr
-                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                         onClick={() => toggleExpand(id)}
                       >
-                        <td className="px-2 py-3 text-slate-400">
+                        <td className="px-2 py-3 text-slate-400 dark:text-slate-500">
                           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-600 whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {formatDateTime(msg.timestamp)}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-xs font-medium text-slate-800">{msg.chargePointId}</span>
+                          <span className="text-xs font-medium text-slate-800 dark:text-slate-100">{msg.chargePointId}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
-                            {msg.action ?? '—'}
+                          <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/20 px-2 py-0.5 rounded-md">
+                            {msg.action ?? '-'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`badge text-xs ${dir === 'IN' ? 'badge-in' : dir === 'OUT' ? 'badge-out' : 'badge-offline'}`}>
-                            {dir === 'IN' ? t.messages.dirIn : dir === 'OUT' ? t.messages.dirOut : dir ?? '—'}
+                            {dir === 'IN' ? t.messages.dirIn : dir === 'OUT' ? t.messages.dirOut : dir ?? '-'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 hidden md:table-cell text-xs text-slate-400">
-                          {msg.messageType != null ? t.messages.messageType(msg.messageType) : '—'}
+                        <td className="px-4 py-3 hidden md:table-cell text-xs text-slate-400 dark:text-slate-500">
+                          {msg.messageType != null ? t.messages.messageType(msg.messageType) : '-'}
                         </td>
                         <td className="px-4 py-3">
                           <button
                             onClick={(e) => { e.stopPropagation(); setViewing(msg) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                           >
                             <Eye size={14} />
                           </button>
                         </td>
                       </tr>
                       {isOpen && (
-                        <tr key={`${id}-expand`}>
-                          <td colSpan={7} className="px-4 pb-3 pt-0 bg-slate-50">
+                        <tr>
+                          <td colSpan={7} className="px-4 pb-3 pt-0 bg-slate-50 dark:bg-slate-800/70">
                             <JsonViewer data={msg.payload ?? msg.rawMessage ?? msg} />
                           </td>
                         </tr>
@@ -191,11 +185,10 @@ export default function MessagesPage() {
         <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
       )}
 
-      {/* Payload Modal */}
       {viewing && (
         <JsonViewer
           data={viewing.payload ?? viewing.rawMessage ?? viewing}
-          title={`Message Payload — ${viewing.action ?? 'OCPP'} | ${viewing.chargePointId}`}
+          title={`Message Payload - ${viewing.action ?? 'OCPP'} | ${viewing.chargePointId}`}
           onClose={() => setViewing(null)}
         />
       )}

@@ -22,9 +22,9 @@ export default function StatCard({ title, value, subtitle, icon, variant = 'defa
     <div className={`card card-hover animate-fade-in p-5 ${s.bg}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{value}</p>
-          {subtitle && <p className="text-xs text-slate-500 mt-1.5">{subtitle}</p>}
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 leading-none">{value}</p>
+          {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">{subtitle}</p>}
           {trend && (
             <p className={`text-xs font-medium mt-2 ${trend.value >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)}% {trend.label}
