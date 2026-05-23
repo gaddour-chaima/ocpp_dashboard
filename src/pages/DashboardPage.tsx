@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import {
   Zap, ZapOff, BatteryCharging, Wifi, Activity,
-  ArrowLeftRight, CheckCircle2, Clock, RefreshCw, TrendingUp
+  ArrowLeftRight, CheckCircle2, Clock, RefreshCw, TrendingUp, Coins
 } from 'lucide-react'
 import StatCard from '@/components/StatCard'
 import ChartCard from '@/components/ChartCard'
@@ -130,6 +130,13 @@ export default function DashboardPage() {
               icon={<CheckCircle2 size={18} />}
               variant="default"
               subtitle={t.dashboard.meanSessionEnergy}
+            />
+            <StatCard
+              title={t.dashboard.totalRevenue ?? 'Total Revenue'}
+              value={txOverview?.totalRevenue != null ? `${Number(txOverview.totalRevenue).toFixed(2)} dt` : '—'}
+              icon={<Coins size={18} />}
+              variant="emerald"
+              subtitle={t.dashboard.totalRevenueSubtitle ?? 'System-wide earnings'}
             />
           </>
         )}

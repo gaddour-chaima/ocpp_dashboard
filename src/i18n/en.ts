@@ -98,6 +98,8 @@ const en = {
     recentChargers: 'Recent Chargers',
     noChargers: 'No chargers found',
     live: 'Live',
+    totalRevenue: 'Total Revenue',
+    totalRevenueSubtitle: 'System-wide earnings',
   },
   // Charge Points
   chargePoints: {
@@ -143,6 +145,11 @@ const en = {
     maxCurrent: 'Max Current',
     maxEnergy: 'Max Energy',
     statusHistoryRecords: (n: number) => `Status History (${n} records)`,
+    pricePerKWh: 'Price per kWh',
+    revenue: 'Total Revenue',
+    updatePrice: 'Update Price',
+    updatePriceSuccess: 'Price updated successfully',
+    updatePriceError: 'Failed to update price',
   },
   // Transactions
   transactions: {
@@ -177,6 +184,7 @@ const en = {
     meterStart: 'Meter Start',
     meterStop: 'Meter Stop',
     energyConsumed: 'Energy Consumed',
+    cost: 'Cost',
   },
   // Messages
   messages: {
@@ -281,6 +289,10 @@ const en = {
     ocppAuth: 'OCPP Auth',
     tls: 'TLS',
     sessionTimeout: 'Session Timeout',
+    globalPricing: 'Global Pricing',
+    globalPricingDesc: 'Set a default price per kWh for all charge points on the network.',
+    applyToAll: 'Apply to all charge points',
+    applySuccess: 'Prices updated successfully!',
     about: 'About',
     project: 'Project',
     version: 'Version',

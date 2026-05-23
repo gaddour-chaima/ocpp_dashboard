@@ -1,20 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Zap, LayoutGrid, List, Clock, Cpu, Filter } from 'lucide-react'
+import { Zap, LayoutGrid, List, Clock, Cpu, Filter, Coins, Check, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import SearchInput from '@/components/SearchInput'
-import Pagination from '@/components/Pagination'
 import EmptyState from '@/components/EmptyState'
 import ErrorState from '@/components/ErrorState'
 import { TableSkeleton } from '@/components/LoadingSkeleton'
-import { useChargePoints } from '@/hooks/useChargePoints'
+import { useInfiniteChargePoints, useUpdateChargePoint } from '@/hooks/useChargePoints'
 import { formatTimeAgo } from '@/utils/formatters'
 import type { ChargePoint } from '@/types'
 import { useLang } from '@/contexts/LangContext'
 
 const STATUS_OPTIONS = ['All', 'Available', 'Charging', 'Offline', 'Faulted', 'Preparing', 'Reserved', 'Unavailable']
-const PAGE_SIZE = 12
 
 export default function ChargePointsPage() {
   const { t } = useLang()
@@ -22,11 +20,30 @@ export default function ChargePointsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [page, setPage] = useState(1)
 
-  const { data, isLoading, isError, refetch } = useChargePoints()
-  const getArray = (val: any) => Array.isArray(val) ? val : (Array.isArray(val?.data) ? val.data : [])
-  const rawList: ChargePoint[] = getArray(data)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const lastRowRef = useRef<HTMLTableRowElement | HTMLDivElement | null>(null)
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteChargePoints()
+
+  const { mutateAsync: updateChargePoint } = useUpdateChargePoint()
+  const [globalPrice, setGlobalPrice] = useState('')
+  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false)
+  const [priceUpdateSuccess, setPriceUpdateSuccess] = useState(false)
+
+  // Flatten all pages
+  const rawList: ChargePoint[] = useMemo(() => {
+    const pages = data?.pages || []
+    return pages.flatMap((p: any) => Array.isArray(p) ? p : (Array.isArray(p?.data) ? p.data : []))
+  }, [data])
 
   const filtered = useMemo(() => {
     return rawList.filter((cp) => {
@@ -39,10 +56,51 @@ export default function ChargePointsPage() {
     })
   }, [rawList, search, statusFilter])
 
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  // Infinite scroll: observe the last element
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect()
 
-  const handleFilterChange = (s: string) => { setStatusFilter(s); setPage(1) }
-  const handleSearch = (v: string) => { setSearch(v); setPage(1) }
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (lastRowRef.current) {
+      observerRef.current.observe(lastRowRef.current)
+    }
+
+    return () => observerRef.current?.disconnect()
+  }, [filtered, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  const handleFilterChange = (s: string) => setStatusFilter(s)
+  const handleSearch = (v: string) => setSearch(v)
+
+  const handleUpdateGlobalPrice = async () => {
+    const normalizedInput = globalPrice.replace(',', '.')
+    const val = parseFloat(normalizedInput)
+    if (isNaN(val) || val < 0) return
+    if (rawList.length === 0) return
+
+    setIsUpdatingPrice(true)
+    setPriceUpdateSuccess(false)
+    try {
+      await Promise.all(
+        rawList.map((cp: any) =>
+          updateChargePoint({ id: cp.chargePointId || cp.id, data: { pricePerKWh: val } })
+        )
+      )
+      setPriceUpdateSuccess(true)
+      setTimeout(() => setPriceUpdateSuccess(false), 3000)
+    } catch (error) {
+      console.error('Failed to update global price:', error)
+    } finally {
+      setIsUpdatingPrice(false)
+    }
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -73,6 +131,46 @@ export default function ChargePointsPage() {
         }
       />
 
+      {/* Global Pricing Banner */}
+      <div className="card p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 border-emerald-100 dark:border-emerald-800/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Coins size={16} className="text-emerald-600 dark:text-emerald-400" />
+              <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">{t.settings?.globalPricing || 'Global Pricing'}</h3>
+            </div>
+            <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
+              {t.settings?.globalPricingDesc || 'Set a default price per kWh for all charge points on the network.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={globalPrice}
+                onChange={(e) => setGlobalPrice(e.target.value)}
+                placeholder="0.291"
+                className="w-24 sm:w-28 pl-3 pr-8 py-2 text-sm border border-emerald-200 dark:border-emerald-700/50 rounded-lg focus:outline-none focus:border-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">dt</span>
+            </div>
+            <button
+              onClick={handleUpdateGlobalPrice}
+              disabled={isUpdatingPrice || !globalPrice}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center min-w-[140px]"
+            >
+              {isUpdatingPrice ? <RefreshCw size={14} className="animate-spin" /> : (t.settings?.applyToAll || 'Apply to all')}
+            </button>
+            {priceUpdateSuccess && (
+              <div className="flex items-center text-emerald-600 dark:text-emerald-400">
+                <Check size={18} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchInput value={search} onChange={handleSearch} placeholder={t.chargePoints.searchPlaceholder} className="flex-1 max-w-sm" />
         <div className="flex items-center gap-2 flex-wrap">
@@ -101,19 +199,44 @@ export default function ChargePointsPage() {
           <EmptyState icon={<Zap size={24} />} title={t.chargePoints.noChargers} description={t.chargePoints.noChargersDesc} />
         </div>
       ) : viewMode === 'table' ? (
-        <ChargePointTable items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} t={t} />
+        <ChargePointTable
+          items={filtered}
+          onSelect={(id) => navigate(`/charge-points/${id}`)}
+          t={t}
+          lastRowRef={lastRowRef as React.RefObject<HTMLTableRowElement>}
+        />
       ) : (
-        <ChargePointGrid items={paginated} onSelect={(id) => navigate(`/charge-points/${id}`)} t={t} />
+        <ChargePointGrid
+          items={filtered}
+          onSelect={(id) => navigate(`/charge-points/${id}`)}
+          t={t}
+          lastRowRef={lastRowRef as React.RefObject<HTMLDivElement>}
+        />
       )}
 
-      {!isLoading && !isError && (
-        <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-4">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!isLoading && !hasNextPage && filtered.length > 0 && (
+        <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-2">
+          {filtered.length} {t.chargePoints.title.toLowerCase()} affichées
+        </p>
       )}
     </div>
   )
 }
 
-function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSelect: (id: string) => void; t: any }) {
+function ChargePointTable({
+  items, onSelect, t, lastRowRef
+}: {
+  items: ChargePoint[]
+  onSelect: (id: string) => void
+  t: any
+  lastRowRef: React.RefObject<HTMLTableRowElement>
+}) {
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
@@ -129,9 +252,10 @@ function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSele
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-            {items.map((cp) => (
+            {items.map((cp, idx) => (
               <tr
                 key={cp.chargePointId ?? cp.id}
+                ref={idx === items.length - 1 ? lastRowRef : null}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 onClick={() => onSelect(cp.chargePointId ?? cp.id!)}
               >
@@ -175,12 +299,20 @@ function ChargePointTable({ items, onSelect, t }: { items: ChargePoint[]; onSele
   )
 }
 
-function ChargePointGrid({ items, onSelect, t }: { items: ChargePoint[]; onSelect: (id: string) => void; t: any }) {
+function ChargePointGrid({
+  items, onSelect, t, lastRowRef
+}: {
+  items: ChargePoint[]
+  onSelect: (id: string) => void
+  t: any
+  lastRowRef: React.RefObject<HTMLDivElement>
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {items.map((cp) => (
+      {items.map((cp, idx) => (
         <div
           key={cp.chargePointId ?? cp.id}
+          ref={idx === items.length - 1 ? lastRowRef : null}
           className="card card-hover p-4 cursor-pointer"
           onClick={() => onSelect(cp.chargePointId ?? cp.id!)}
         >

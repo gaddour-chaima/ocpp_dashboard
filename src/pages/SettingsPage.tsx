@@ -1,6 +1,8 @@
-import { RefreshCw, Server, Bell, Palette, Moon, Sun } from 'lucide-react'
+import { RefreshCw, Server, Bell, Palette, Moon, Sun, Coins, Check, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
 import PageHeader from '@/components/PageHeader'
 import { useHealth } from '@/hooks/useStats'
+import { useChargePoints, useUpdateChargePoint } from '@/hooks/useChargePoints'
 import { formatDateTime } from '@/utils/formatters'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLang } from '@/contexts/LangContext'
@@ -9,6 +11,40 @@ export default function SettingsPage() {
   const { data: health, isLoading, refetch, dataUpdatedAt } = useHealth()
   const { theme, setTheme } = useTheme()
   const { t, lang, setLang } = useLang()
+
+  const { data: chargePointsRes } = useChargePoints()
+  const { mutateAsync: updateChargePoint } = useUpdateChargePoint()
+  const [globalPrice, setGlobalPrice] = useState('')
+  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false)
+  const [priceUpdateSuccess, setPriceUpdateSuccess] = useState(false)
+
+  const handleUpdateGlobalPrice = async () => {
+    const normalizedInput = globalPrice.replace(',', '.')
+    const val = parseFloat(normalizedInput)
+    if (isNaN(val) || val < 0) return
+
+    const chargePoints = Array.isArray(chargePointsRes) 
+      ? chargePointsRes 
+      : (Array.isArray(chargePointsRes?.data) ? chargePointsRes.data : [])
+
+    if (chargePoints.length === 0) return
+
+    setIsUpdatingPrice(true)
+    setPriceUpdateSuccess(false)
+    try {
+      await Promise.all(
+        chargePoints.map((cp: any) => 
+          updateChargePoint({ id: cp.chargePointId || cp.id, data: { pricePerKWh: val } })
+        )
+      )
+      setPriceUpdateSuccess(true)
+      setTimeout(() => setPriceUpdateSuccess(false), 3000)
+    } catch (error) {
+      console.error('Failed to update global price:', error)
+    } finally {
+      setIsUpdatingPrice(false)
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -118,6 +154,50 @@ export default function SettingsPage() {
             </div>
 
             <p className="text-xs text-slate-400 dark:text-slate-500 italic">{t.settings.themeSaved}</p>
+          </div>
+        </div>
+
+        <div className="card p-5">
+          <SectionTitle icon={<Coins size={16} className="text-emerald-500" />} title={t.settings.globalPricing} />
+          <div className="space-y-4 mt-4">
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.settings.globalPricing}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 mb-3">{t.settings.globalPricingDesc}</p>
+              
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={globalPrice}
+                    onChange={(e) => setGlobalPrice(e.target.value)}
+                    placeholder="0.291"
+                    className="w-full sm:w-32 pl-3 pr-8 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">dt</span>
+                </div>
+                <button
+                  onClick={handleUpdateGlobalPrice}
+                  disabled={isUpdatingPrice || !globalPrice}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center min-w-[140px]"
+                >
+                  {isUpdatingPrice ? <RefreshCw size={14} className="animate-spin" /> : t.settings.applyToAll}
+                </button>
+              </div>
+
+              {priceUpdateSuccess && (
+                <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 p-2 rounded-lg">
+                  <Check size={14} />
+                  {t.settings.applySuccess}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30 flex gap-2.5">
+              <AlertCircle size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                Updating the price here will securely dispatch individual requests to the backend for every connected charge point.
+              </p>
+            </div>
           </div>
         </div>
 

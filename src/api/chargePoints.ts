@@ -7,6 +7,9 @@ export const chargePointsApi = {
   getById: (id: string) =>
     apiClient.get(`/api/charge-points/${id}`).then((r) => r.data),
 
+  update: (id: string, data: { pricePerKWh?: number; [key: string]: any }) =>
+    apiClient.put(`/api/charge-points/${id}`, data).then((r) => r.data),
+
   getStatusHistory: (id: string, params?: Record<string, unknown>) =>
     apiClient.get(`/api/charge-points/${id}/status-history`, { params }).then((r) => r.data),
 

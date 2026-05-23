@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts'
 import {
-  ArrowLeft, Zap, Clock, Cpu, Wifi, AlertCircle, ArrowLeftRight, Activity, Battery
+  ArrowLeft, Zap, Clock, Cpu, Wifi, AlertCircle, ArrowLeftRight, Activity, Battery, Coins, Edit2, Check, X
 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
@@ -13,7 +13,7 @@ import ErrorState from '@/components/ErrorState'
 import { StatCardSkeleton, ChartSkeleton } from '@/components/LoadingSkeleton'
 import {
   useChargePoint, useChargePointStatusHistory,
-  useChargePointMeterValues, useChargePointTransactions
+  useChargePointMeterValues, useChargePointTransactions, useUpdateChargePoint
 } from '@/hooks/useChargePoints'
 import { useLang } from '@/contexts/LangContext'
 import { formatDateTime, formatTimeAgo, formatEnergy, formatDuration } from '@/utils/formatters'
@@ -35,6 +35,10 @@ export default function ChargePointDetailPage() {
   const { data: statusHistory } = useChargePointStatusHistory(chargePointId!)
   const { data: meterValues } = useChargePointMeterValues(chargePointId!)
   const { data: transactions } = useChargePointTransactions(chargePointId!)
+  const { mutate: updateChargePoint, isPending: isUpdatingPrice } = useUpdateChargePoint()
+
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
+  const [priceInput, setPriceInput] = useState('')
 
   const getArray = (val: any) => Array.isArray(val) ? val : (Array.isArray(val?.data) ? val.data : [])
 
@@ -60,6 +64,32 @@ export default function ChargePointDetailPage() {
   if (isError) return <ErrorState title="Charge point not found" onRetry={refetch} />
 
   const charger = cp?.data ?? cp
+  const totalRevenue = txData.reduce((sum, tx) => sum + (Number(tx.cost) || 0), 0)
+
+  const handleEditPrice = () => {
+    setPriceInput(charger?.pricePerKWh?.toString() || '0')
+    setIsEditingPrice(true)
+  }
+
+  const handleSavePrice = () => {
+    const normalizedInput = priceInput.replace(',', '.')
+    const val = parseFloat(normalizedInput)
+    if (!isNaN(val) && val >= 0) {
+      updateChargePoint(
+        { id: chargePointId!, data: { pricePerKWh: val } },
+        {
+          onSuccess: () => {
+            setIsEditingPrice(false)
+            refetch()
+          }
+        }
+      )
+    }
+  }
+
+  const handleCancelPrice = () => {
+    setIsEditingPrice(false)
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -116,6 +146,31 @@ export default function ChargePointDetailPage() {
               </InfoRow>
               <InfoRow icon={<Battery size={13} />} label={t.chargePoints.maxEnergy}>
                 <span className="text-sm text-slate-700">{charger.maxEnergy !== undefined && charger.maxEnergy !== null ? `${charger.maxEnergy}kW·h` : '—'}</span>
+              </InfoRow>
+              <InfoRow icon={<Coins size={13} />} label={t.chargePoints.revenue}>
+                <span className="text-sm font-semibold text-emerald-600">{totalRevenue.toFixed(2)} dt</span>
+              </InfoRow>
+              <InfoRow icon={<Activity size={13} />} label={t.chargePoints.pricePerKWh}>
+                {isEditingPrice ? (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <input 
+                      type="text" 
+                      value={priceInput} 
+                      onChange={(e) => setPriceInput(e.target.value)}
+                      className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500" 
+                      autoFocus 
+                    />
+                    <button disabled={isUpdatingPrice} onClick={handleSavePrice} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"><Check size={14} /></button>
+                    <button disabled={isUpdatingPrice} onClick={handleCancelPrice} className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group">
+                    <span className="text-sm text-slate-700">{charger.pricePerKWh !== undefined && charger.pricePerKWh !== null ? `${charger.pricePerKWh} dt` : '—'}</span>
+                    <button onClick={handleEditPrice} className="p-1 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title={t.chargePoints.updatePrice}>
+                      <Edit2 size={13} />
+                    </button>
+                  </div>
+                )}
               </InfoRow>
             </div>
           </div>

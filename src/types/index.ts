@@ -36,6 +36,7 @@ export interface ChargePoint {
   connectors?: Connector[]
   maxCurrent?: number
   maxEnergy?: number
+  pricePerKWh?: number
 }
 
 export interface Connector {
@@ -77,6 +78,8 @@ export interface Transaction {
   stopReason?: string
   status?: string
   energyConsumed?: number
+  pricePerKWh?: number
+  cost?: number
 }
 
 export interface TransactionOverview {
@@ -85,6 +88,7 @@ export interface TransactionOverview {
   completed: number
   totalEnergy: number
   avgEnergy: number
+  totalRevenue?: number
 }
 
 export interface StatsOverview {

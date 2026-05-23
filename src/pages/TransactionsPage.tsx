@@ -53,6 +53,8 @@ export default function TransactionsPage() {
         meterStart: tx.meterStart ?? tx.meter_start,
         meterStop: tx.meterStop ?? tx.meter_stop,
         stopReason: tx.stopReason ?? tx.stop_reason,
+        pricePerKWh: tx.pricePerKWh ?? tx.price_per_kwh,
+        cost: tx.cost,
         status: resolvedStatus,
       }
     })
@@ -127,7 +129,7 @@ export default function TransactionsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-                  {[t.transactions.id, t.transactions.chargePoint, t.transactions.connector, t.transactions.idTag, t.transactions.start, t.transactions.stop, t.transactions.duration, t.transactions.energy, t.transactions.status].map((h) => (
+                  {[t.transactions.id, t.transactions.chargePoint, t.transactions.connector, t.transactions.idTag, t.transactions.start, t.transactions.stop, t.transactions.duration, t.transactions.energy, t.transactions.cost, t.transactions.status].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                   <th className="px-4 py-3" />
@@ -163,6 +165,7 @@ export default function TransactionsPage() {
                       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatDateTime(tx.stopTime)}</td>
                       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{formatDuration(tx.startTime, tx.stopTime ?? null)}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-slate-800 dark:text-slate-100">{formatEnergy(tx.energyConsumed)}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tx.cost != null ? `${Number(tx.cost).toFixed(2)} dt` : '-'}</td>
                       <td className="px-4 py-3"><StatusBadge status={status} size="sm" /></td>
                       <td className="px-4 py-3">
                         <button
@@ -230,6 +233,18 @@ function TransactionDrawer({ tx, onClose, t }: { tx: Transaction; onClose: () =>
             <DrawerRow label={t.transactions.meterStop} value={tx.meterStop != null ? `${tx.meterStop} Wh` : undefined} />
             <DrawerRow label={t.transactions.energyConsumed} value={formatEnergy(tx.energyConsumed)} highlight />
           </DrawerSection>
+          <DrawerSection title={t.transactions.cost ?? 'Tarification'}>
+            <DrawerRow
+              label={t.chargePoints?.pricePerKWh || 'Prix par kWh'}
+              value={tx.pricePerKWh != null ? `${tx.pricePerKWh} dt/kWh` : '-'}
+            />
+            <DrawerRow
+              label={t.transactions.cost ?? 'Coût total'}
+              value={tx.cost != null ? `${Number(tx.cost).toFixed(3)} dt` : '-'}
+              highlight
+              color="emerald"
+            />
+          </DrawerSection>
         </div>
       </div>
     </>
@@ -245,11 +260,16 @@ function DrawerSection({ title, children }: { title: string; children: React.Rea
   )
 }
 
-function DrawerRow({ label, value, mono, highlight }: { label: string; value?: string | number | null; mono?: boolean; highlight?: boolean }) {
+function DrawerRow({ label, value, mono, highlight, color }: { label: string; value?: string | number | null; mono?: boolean; highlight?: boolean; color?: 'emerald' }) {
+  const valueClass = color === 'emerald'
+    ? 'font-bold text-emerald-600 dark:text-emerald-400'
+    : highlight
+      ? 'font-bold text-slate-900 dark:text-slate-100'
+      : 'text-slate-700 dark:text-slate-200'
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
-      <span className={`text-sm text-right ${highlight ? 'font-bold text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'} ${mono ? 'font-mono' : ''}`}>
+      <span className={`text-sm text-right ${valueClass} ${mono ? 'font-mono' : ''}`}>
         {value ?? '-'}
       </span>
     </div>
