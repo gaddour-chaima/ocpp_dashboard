@@ -150,22 +150,40 @@ export interface HealthStatus {
   websocket?: string
 }
 
-export interface AiForecast {
-  forecast?: EnergyDataPoint[]
-  predictedEnergy?: number
-  confidence?: number
-  period?: string
-  message?: string
+export interface AiForecastPoint {
+  date: string
+  energy: number
 }
 
-export interface AiAnomaly {
-  anomalies?: Array<{
-    chargePointId: string
-    type: string
-    severity: string
-    timestamp: string
-    description?: string
-  }>
-  totalDetected?: number
-  message?: string
+export interface AiForecastResponse {
+  forecast: AiForecastPoint[]
+}
+
+export interface AiAnomalyItem {
+  chargePointId: string
+  type: string
+  severity: string
+  timestamp: string
+  explanation: string
+}
+
+export interface AiAnomaliesResponse {
+  anomalies: AiAnomalyItem[]
+}
+
+export interface AiSummaryResponse {
+  predictedEnergy: number
+  confidenceScore: number
+  predictionPeriod: string
+  modelName: string
+  anomaliesCount: number
+}
+
+export interface AiRecommendationItem {
+  id: string
+  message: string
+}
+
+export interface AiRecommendationsResponse {
+  recommendations: AiRecommendationItem[]
 }

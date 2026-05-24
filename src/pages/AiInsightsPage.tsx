@@ -1,23 +1,35 @@
-import { BrainCircuit, TrendingUp, AlertTriangle, Sparkles, Clock, Zap, CheckCircle } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import PageHeader from '@/components/PageHeader'
+import { AlertTriangle, BrainCircuit, CheckCircle, Clock, ListChecks, Sparkles, TrendingUp, Zap } from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import ChartCard from '@/components/ChartCard'
+import EmptyState from '@/components/EmptyState'
+import ErrorState from '@/components/ErrorState'
 import { ChartSkeleton } from '@/components/LoadingSkeleton'
-import { useAiForecast, useAiAnomaly } from '@/hooks/useAi'
+import PageHeader from '@/components/PageHeader'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { formatEnergy, formatDateTime } from '@/utils/formatters'
+import { useAiAnomalies, useAiForecast, useAiRecommendations, useAiSummary } from '@/hooks/useAi'
+import { formatDateTime, formatEnergy, formatNumber } from '@/utils/formatters'
 
 export default function AiInsightsPage() {
   const { t } = useLang()
   const { theme } = useTheme()
-  const { data: forecast, isLoading: fLoading, isError: fError } = useAiForecast()
-  const { data: anomaly, isLoading: aLoading, isError: aError } = useAiAnomaly()
-
-  const getArray = (val: any) => Array.isArray(val) ? val : (Array.isArray(val?.data) ? val.data : [])
-  const forecastData = getArray(forecast?.forecast ?? forecast)
-  const anomalies = getArray(anomaly?.anomalies ?? anomaly)
   const isDark = theme === 'dark'
+
+  const forecastQuery = useAiForecast()
+  const anomaliesQuery = useAiAnomalies()
+  const summaryQuery = useAiSummary()
+  const recommendationsQuery = useAiRecommendations()
+
+  const forecastData = forecastQuery.data?.forecast ?? []
+  const anomalies = anomaliesQuery.data?.anomalies ?? []
+  const summary = summaryQuery.data
+  const recommendations = recommendationsQuery.data?.recommendations ?? []
+
+  const anyError =
+    forecastQuery.isError ||
+    anomaliesQuery.isError ||
+    summaryQuery.isError ||
+    recommendationsQuery.isError
 
   const tooltipStyle = {
     background: isDark ? '#0f172a' : '#ffffff',
@@ -32,7 +44,7 @@ export default function AiInsightsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title={t.aiInsights.title}
+        title={t.aiInsights.smartSupervisionTitle}
         subtitle={t.aiInsights.subtitle}
         actions={
           <span
@@ -58,11 +70,27 @@ export default function AiInsightsPage() {
         </div>
       </div>
 
+      {anyError && (
+        <div className="card">
+          <ErrorState />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="space-y-4">
-          <ChartCard title={t.aiInsights.energyForecast} subtitle={t.aiInsights.energyForecastSub} action={<span className="text-xs font-medium text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/20 px-2.5 py-1 rounded-full">{t.aiInsights.mlForecast}</span>}>
-            {fLoading ? <ChartSkeleton height={200} /> : fError || forecastData.length === 0 ? (
-              <AiPlaceholderChart color="#8b5cf6" t={t} />
+          <ChartCard
+            title={t.aiInsights.energyForecast}
+            subtitle={t.aiInsights.forecastNext7Days}
+            action={<span className="text-xs font-medium text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/20 px-2.5 py-1 rounded-full">{t.aiInsights.mlForecast}</span>}
+          >
+            {forecastQuery.isLoading ? (
+              <ChartSkeleton height={200} />
+            ) : forecastData.length === 0 ? (
+              <EmptyState
+                icon={<TrendingUp size={20} />}
+                title={t.common.noData}
+                description={t.aiInsights.noForecastData}
+              />
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={forecastData} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
@@ -75,8 +103,12 @@ export default function AiInsightsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={tooltipCursor} formatter={(v: number) => [`${(v / 1000).toFixed(2)} kWh`, 'Forecast']} />
-                  <Area type="monotone" dataKey="energy" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 3" fill="url(#fGrad)" dot={false} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={tooltipCursor}
+                    formatter={(v) => [formatEnergy(Number(v ?? 0)), t.aiInsights.predictedEnergy]}
+                  />
+                  <Area type="monotone" dataKey="energy" stroke="#8b5cf6" strokeWidth={2} fill="url(#fGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -88,23 +120,33 @@ export default function AiInsightsPage() {
                 <TrendingUp size={16} className="text-violet-600 dark:text-violet-300" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t.aiInsights.forecastSummary}</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t.aiInsights.intelligentSummary}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">{t.aiInsights.forecastSummarySub}</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: t.aiInsights.predictedEnergy, value: forecast?.predictedEnergy ? formatEnergy(forecast.predictedEnergy) : '~124 kWh', icon: <Zap size={14} className="text-violet-500" /> },
-                { label: t.aiInsights.confidence, value: `${forecast?.confidence ?? 87}%`, icon: <CheckCircle size={14} className="text-emerald-500" /> },
-                { label: t.aiInsights.period, value: forecast?.period ?? '7 days', icon: <Clock size={14} className="text-blue-500" /> },
-                { label: t.aiInsights.model, value: 'LSTM v2.1', icon: <BrainCircuit size={14} className="text-slate-400" /> },
-              ].map((item, i) => (
-                <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 mb-1">{item.icon}<span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span></div>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.value}</p>
-                </div>
-              ))}
-            </div>
+            {summaryQuery.isLoading ? (
+              <div className="grid grid-cols-2 gap-3">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
+            ) : !summary ? (
+              <EmptyState icon={<ListChecks size={20} />} title={t.common.noData} description={t.aiInsights.noSummaryData} />
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: t.aiInsights.predictedEnergy, value: formatEnergy(summary.predictedEnergy), icon: <Zap size={14} className="text-violet-500" /> },
+                  { label: t.aiInsights.confidence, value: `${summary.confidenceScore}%`, icon: <CheckCircle size={14} className="text-emerald-500" /> },
+                  { label: t.aiInsights.period, value: summary.predictionPeriod, icon: <Clock size={14} className="text-blue-500" /> },
+                  { label: t.aiInsights.model, value: summary.modelName, icon: <BrainCircuit size={14} className="text-slate-400" /> },
+                  { label: t.aiInsights.detected, value: formatNumber(summary.anomaliesCount), icon: <AlertTriangle size={14} className="text-rose-500" /> },
+                ].map((item) => (
+                  <div key={item.label} className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      {item.icon}
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+                    </div>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -120,13 +162,53 @@ export default function AiInsightsPage() {
               </div>
               <div className="ml-auto">
                 <span className="text-xs font-medium text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/20 px-2.5 py-1 rounded-full">
-                  {anomaly?.totalDetected ?? (aError ? 2 : 0)} {t.aiInsights.detected}
+                  {formatNumber(anomalies.length)} {t.aiInsights.detected}
                 </span>
               </div>
             </div>
-            {aLoading ? <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-14 rounded-xl" />)}</div> : (
+            {anomaliesQuery.isLoading ? (
+              <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-14 rounded-xl" />)}</div>
+            ) : anomalies.length === 0 ? (
+              <EmptyState icon={<AlertTriangle size={20} />} title={t.common.noData} description={t.aiInsights.noAnomaliesData} />
+            ) : (
               <div className="space-y-3">
-                {(anomalies.length > 0 ? anomalies : MOCK_ANOMALIES).map((a, i) => <AnomalyCard key={i} anomaly={a} />)}
+                {anomalies.map((item, i) => (
+                  <AnomalyCard
+                    key={`${item.chargePointId}-${item.timestamp}-${i}`}
+                    anomaly={{
+                      chargePointId: item.chargePointId,
+                      type: item.type,
+                      severity: item.severity,
+                      timestamp: item.timestamp,
+                      explanation: item.explanation,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center">
+                <ListChecks size={16} className="text-blue-600 dark:text-blue-300" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t.aiInsights.recommendationsTitle}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t.aiInsights.recommendationsSub}</p>
+              </div>
+            </div>
+            {recommendationsQuery.isLoading ? (
+              <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-12 rounded-xl" />)}</div>
+            ) : recommendations.length === 0 ? (
+              <EmptyState icon={<ListChecks size={20} />} title={t.common.noData} description={t.aiInsights.noRecommendationsData} />
+            ) : (
+              <div className="space-y-2">
+                {recommendations.map((rec, i) => (
+                  <div key={rec.id || `${i}`} className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/70">
+                    <p className="text-sm text-slate-700 dark:text-slate-200">{rec.message}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -136,25 +218,11 @@ export default function AiInsightsPage() {
   )
 }
 
-function AiPlaceholderChart({ color, t }: { color: string; t: any }) {
-  const data = Array.from({ length: 14 }, (_, i) => ({ date: `D+${i + 1}`, energy: 80000 + Math.sin(i * 0.8) * 30000 + Math.random() * 20000 }))
-  return (
-    <div className="relative">
-      <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={data} margin={{ top: 4, right: 12, left: -10, bottom: 0 }}>
-          <defs><linearGradient id="demoGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={color} stopOpacity={0.2} /><stop offset="95%" stopColor={color} stopOpacity={0} /></linearGradient></defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-          <Area type="monotone" dataKey="energy" stroke={color} strokeWidth={2} strokeDasharray="6 3" fill="url(#demoGrad)" dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex items-center justify-center"><span className="text-xs text-slate-300 bg-slate-900/80 px-3 py-1 rounded-full font-medium backdrop-blur-sm">{t.aiInsights.demoData}</span></div>
-    </div>
-  )
-}
-
-function AnomalyCard({ anomaly }: { anomaly: { chargePointId: string; type: string; severity: string; timestamp: string; description?: string } }) {
+function AnomalyCard({
+  anomaly,
+}: {
+  anomaly: { chargePointId: string; type: string; severity: string; timestamp: string; explanation: string }
+}) {
   const severityColors: Record<string, string> = { high: '#f43f5e', medium: '#f59e0b', low: '#3b82f6', critical: '#7c3aed' }
   const color = severityColors[anomaly.severity?.toLowerCase()] ?? '#64748b'
   return (
@@ -163,16 +231,15 @@ function AnomalyCard({ anomaly }: { anomaly: { chargePointId: string; type: stri
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{anomaly.type}</p>
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${color}15`, color }}>{anomaly.severity}</span>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${color}15`, color }}>
+            {anomaly.severity}
+          </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{anomaly.chargePointId} - {anomaly.description ?? 'Unusual pattern detected'}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          {anomaly.chargePointId} - {anomaly.explanation}
+        </p>
         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{formatDateTime(anomaly.timestamp)}</p>
       </div>
     </div>
   )
 }
-
-const MOCK_ANOMALIES = [
-  { chargePointId: 'CP-001', type: 'Over-current Spike', severity: 'high', timestamp: new Date(Date.now() - 3600000).toISOString(), description: 'Current exceeded 32A threshold' },
-  { chargePointId: 'CP-003', type: 'Repeated Disconnects', severity: 'medium', timestamp: new Date(Date.now() - 7200000).toISOString(), description: '4 disconnections in 1 hour' },
-]
