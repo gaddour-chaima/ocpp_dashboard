@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { ArrowLeftRight, Clock, Zap, User } from 'lucide-react'
-import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import SearchInput from '@/components/SearchInput'
 import EmptyState from '@/components/EmptyState'
@@ -81,8 +80,6 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader title={t.transactions.title} subtitle={t.transactions.subtitle} />
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {overviewLoading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)

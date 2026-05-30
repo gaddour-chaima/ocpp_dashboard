@@ -3,7 +3,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { TrendingUp, Zap, BarChart3, Wifi } from 'lucide-react'
-import PageHeader from '@/components/PageHeader'
 import ChartCard from '@/components/ChartCard'
 import StatCard from '@/components/StatCard'
 import { ChartSkeleton, StatCardSkeleton } from '@/components/LoadingSkeleton'
@@ -51,8 +50,6 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title={t.analytics.title} subtitle={t.analytics.subtitle} />
-
       {/* KPI Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statsLoading ? (

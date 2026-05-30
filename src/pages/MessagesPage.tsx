@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react'
 import { MessageSquare, Eye, ChevronDown, ChevronRight, Filter } from 'lucide-react'
-import PageHeader from '@/components/PageHeader'
 import SearchInput from '@/components/SearchInput'
 import Pagination from '@/components/Pagination'
 import EmptyState from '@/components/EmptyState'
@@ -56,8 +55,6 @@ export default function MessagesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader title={t.messages.title} subtitle={t.messages.subtitle(filtered.length)} />
-
       <div className="card p-4 space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <SearchInput

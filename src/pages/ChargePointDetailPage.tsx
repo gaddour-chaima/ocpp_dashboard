@@ -6,7 +6,6 @@ import {
 import {
   ArrowLeft, Zap, Clock, Cpu, Wifi, AlertCircle, ArrowLeftRight, Activity, Battery, Coins, Edit2, Check, X
 } from 'lucide-react'
-import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import ChartCard from '@/components/ChartCard'
 import ErrorState from '@/components/ErrorState'
@@ -93,18 +92,14 @@ export default function ChargePointDetailPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title={chargePointId ?? ''}
-        subtitle={t.chargePoints.detailSubtitle}
-        actions={
-          <button
-            onClick={() => navigate('/charge-points')}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            <ArrowLeft size={14} /> {t.common.back}
-          </button>
-        }
-      />
+      <div>
+        <button
+          onClick={() => navigate('/charge-points')}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+        >
+          <ArrowLeft size={14} /> {t.common.back}
+        </button>
+      </div>
 
       {/* Summary Card */}
       {isLoading ? (

@@ -1,6 +1,5 @@
 import { RefreshCw, Server, Bell, Palette, Moon, Sun, Coins, Check, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
-import PageHeader from '@/components/PageHeader'
 import { useHealth } from '@/hooks/useStats'
 import { useChargePoints, useUpdateChargePoint } from '@/hooks/useChargePoints'
 import { formatDateTime } from '@/utils/formatters'
@@ -48,19 +47,15 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title={t.settings.title}
-        subtitle={t.settings.subtitle}
-        actions={
-          <button
-            onClick={() => refetch()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            {t.settings.refresh}
-          </button>
-        }
-      />
+      <div className="flex justify-end">
+        <button
+          onClick={() => refetch()}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+        >
+          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+          {t.settings.refresh}
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card p-5">

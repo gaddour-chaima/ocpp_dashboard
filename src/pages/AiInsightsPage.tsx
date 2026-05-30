@@ -4,7 +4,6 @@ import ChartCard from '@/components/ChartCard'
 import EmptyState from '@/components/EmptyState'
 import ErrorState from '@/components/ErrorState'
 import { ChartSkeleton } from '@/components/LoadingSkeleton'
-import PageHeader from '@/components/PageHeader'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useAiAnomalies, useAiForecast, useAiRecommendations, useAiSummary } from '@/hooks/useAi'
@@ -43,19 +42,6 @@ export default function AiInsightsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title={t.aiInsights.smartSupervisionTitle}
-        subtitle={t.aiInsights.subtitle}
-        actions={
-          <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{ background: isDark ? 'linear-gradient(135deg, rgba(139,92,246,0.22), rgba(59,130,246,0.18))' : 'linear-gradient(135deg, #ede9fe, #dbeafe)', color: isDark ? '#c4b5fd' : '#4f46e5', border: isDark ? '1px solid rgba(167,139,250,0.4)' : '1px solid #c7d2fe' }}
-          >
-            <Sparkles size={12} /> {t.aiInsights.aiPowered}
-          </span>
-        }
-      />
-
       <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0d1526 0%, #1e1654 50%, #172140 100%)' }}>
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #8b5cf6 0%, transparent 60%)', transform: 'translate(30%, -30%)' }} />
         <div className="absolute bottom-0 left-0 w-48 h-48 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 60%)', transform: 'translate(-30%, 30%)' }} />

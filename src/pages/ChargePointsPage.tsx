@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap, LayoutGrid, List, Clock, Cpu, Filter, Coins, Check, RefreshCw } from 'lucide-react'
-import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import SearchInput from '@/components/SearchInput'
 import EmptyState from '@/components/EmptyState'
@@ -104,32 +103,28 @@ export default function ChargePointsPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title={t.chargePoints.title}
-        subtitle={t.chargePoints.chargersFound(filtered.length)}
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-2 rounded-lg border transition-colors ${viewMode === 'table'
-                ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-            >
-              <List size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg border transition-colors ${viewMode === 'grid'
-                ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-        }
-      />
+      <div className="flex justify-end">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`p-2 rounded-lg border transition-colors ${viewMode === 'table'
+              ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+          >
+            <List size={16} />
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-lg border transition-colors ${viewMode === 'grid'
+              ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/40 text-blue-600 dark:text-blue-300'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+          >
+            <LayoutGrid size={16} />
+          </button>
+        </div>
+      </div>
 
       {/* Global Pricing Banner */}
       <div className="card p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 border-emerald-100 dark:border-emerald-800/30">
